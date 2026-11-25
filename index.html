@@ -104,6 +104,7 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
   background:#eef4ff;color:#192b57;font-size:16px;font-weight:700;
   transition:background-color .18s,border-color .18s;
 }
+#loginPanel .private-login-note{margin:12px 0 0;color:#e3edff;font-size:14px}
 .google-login svg{width:18px;height:18px;flex:none}
 .google-login:hover:not(:disabled){background:#fff;border-color:#fff}
 .google-login:focus-visible{outline:3px solid #fff;outline-offset:5px}
@@ -143,6 +144,7 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
         </svg>
         使用 Google 登入
       </button>
+      <p class="private-login-note">僅限已授權的 Google 帳號登入</p>
       <p id="googleLocalHint" hidden>請從牌單日帳的 HTTPS 網址開啟 Google 登入。</p>
       <output id="loginMessage" aria-live="polite"></output>
     </div>
@@ -261,7 +263,7 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 <div class="actions"><button id="saveRates">儲存設定</button></div>
 <output id="settingsMessage" aria-live="polite"></output>
 <div class="order-step" id="membershipPanel" hidden><h3>共用成員</h3>
-<p class="hint">請成員先登入一次，並把「後台設定 → 共用帳本 → 我的 User ID」提供給你，再貼到下方。</p>
+<p class="hint">請先授權成員的 Google Email。成員登入後，可從「後台設定 → 共用帳本 → 我的 User ID」複製 ID，再貼到下方加入這本帳。</p>
 <label>成員 User ID<input id="memberId" placeholder="貼上成員的 User ID"></label>
 <button id="addMember" type="button">加入成員</button>
 <output id="memberMessage" aria-live="polite"></output><ul id="memberList"></ul>
@@ -526,6 +528,8 @@ const landingUrl=new URL(pageUrl);
 landingUrl.search=""; landingUrl.hash="";
 const callbackHash=new URLSearchParams(pageUrl.hash.slice(1));
 const oauthQuery=(name)=>pageUrl.searchParams.get(name)??callbackHash.get(name);
+const deniedEmailCode="PAIDAN_EMAIL_NOT_AUTHORIZED";
+const deniedEmailMessage="這個 Google 帳號尚未獲得授權。請切換至已授權的帳號，或聯絡管理者。";
 const oauthReturn=Boolean(oauthQuery("code")||oauthQuery("error")||oauthQuery("error_description"));
 const db=window.supabase?.createClient(projectUrl,projectKey,{auth:{flowType:"pkce",detectSessionInUrl:true}});
 let activeWorkspace=null, currentUser=null, listedWorkspaces=[], ready=false, busy=false, refreshing=false, authRevision=0;
@@ -1265,6 +1269,7 @@ async function response(query) {
   const {data,error}=await query;
   if (error) {
     if (["PGRST202","PGRST205","42P01"].includes(error.code)) throw Error("Supabase 找不到共用帳本的資料表或函式，請先執行最新版共用 SQL。");
+    if (error.message?.includes(deniedEmailCode)) throw Error(deniedEmailCode);
     if (error.code==="42501") throw Error("這個帳號無法操作選定帳本，請確認管理者已加入你的帳號。");
     if (/failed to fetch|networkerror|load failed/i.test(error.message)) throw Error("連線失敗，請確認網路後再試。");
     throw Error(error.message||"Supabase 暫時無法處理。");
@@ -1412,7 +1417,7 @@ async function refreshCloud(showProgress=false) {
   const revision=authRevision, workspace=activeWorkspace;
   if (showProgress) $("cloudMessage").textContent="同步中…";
   try {
-    const profiles=await response(db.rpc("paidan_workspaces"));
+    const profiles=await response(db.rpc("paidan_authorized_workspaces"));
     if (revision!==authRevision||workspace!==activeWorkspace) return;
     updateWorkspaceList(profiles,workspace);
     if (!listedWorkspaces.some(row=>row.workspace_id===workspace)) {
@@ -1428,7 +1433,9 @@ async function refreshCloud(showProgress=false) {
     }
     if (await loadBook(workspace)) syncStamp();
   } catch(error) {
-    if (authRevision===revision) $("cloudMessage").textContent=error.message;
+    if (authRevision!==revision) return;
+    if (error.message===deniedEmailCode) await denyAccount();
+    else $("cloudMessage").textContent=error.message;
   } finally { refreshing=false; }
 }
 function updateWorkspaceList(profiles,selected) {
@@ -1465,10 +1472,15 @@ async function setSession(session) {
   currentUser=user;
   ready=false; activeWorkspace=null; listedWorkspaces=[];
   $("cloudApp").hidden=true; $("datePicker").hidden=true;
-  $("appHeader").hidden=!user; $("loginPanel").hidden=!!user;
+  $("appHeader").hidden=true; $("loginPanel").hidden=false;
   $("headerMessage").textContent="";
   $("identityTools").open=false;
-  if (user) $("loginMessage").textContent="";
+  if (user) {
+    $("loginGoogle").disabled=true;
+    $("loginMessage").textContent="正在確認帳號權限…";
+  } else {
+    $("loginGoogle").disabled=!db||!oauthOnWeb;
+  }
   state=emptyBook(); clearBookDrafts(); render();
   $("myUserId").value=user?.id??"";
   $("copyUserMessage").textContent="";
@@ -1476,8 +1488,11 @@ async function setSession(session) {
   $("workspace").replaceChildren();
   setBusy(true);
   try {
-    const profiles=await response(db.rpc("paidan_workspaces"));
+    const profiles=await response(db.rpc("paidan_authorized_workspaces"));
     if (revision!==authRevision) return;
+    $("appHeader").hidden=false; $("loginPanel").hidden=true;
+    $("loginMessage").textContent="";
+    $("loginGoogle").disabled=!db||!oauthOnWeb;
     updateWorkspaceList(profiles);
     let preferred;
     try { preferred=localStorage.getItem("paidan-workspace-"+user.id); } catch {}
@@ -1486,17 +1501,32 @@ async function setSession(session) {
     await activateWorkspace(initial.workspace_id);
   } catch(error) {
     if (revision!==authRevision) return;
-    $("cloudMessage").textContent=error.message;
+    if (error.message===deniedEmailCode) {
+      await denyAccount();
+      return;
+    }
+    $("appHeader").hidden=true;
+    $("loginPanel").hidden=false;
+    $("loginMessage").textContent=error.message;
+    $("loginGoogle").disabled=!db||!oauthOnWeb;
+    currentUser=null;
     setBusy(false);
   }
+}
+async function denyAccount() {
+  await setSession(null);
+  $("loginMessage").textContent=deniedEmailMessage;
+  try { await db.auth.signOut({scope:"local"}); } catch {}
 }
 function handleOAuthReturn(session) {
   if (!oauthReturn) return;
   const error=oauthQuery("error_description")||oauthQuery("error");
-  if (error && !session) {
+  if (error?.includes(deniedEmailCode)) {
+    $("loginMessage").textContent=deniedEmailMessage;
+  } else if (error && !session) {
     $("loginMessage").textContent="Google 登入未完成。"+(oauthQuery("error")==="access_denied"?"請重新點選 Google 登入並授權。":"請稍後再試，或聯絡帳本管理者。");
   } else if (!session) {
-    $("loginMessage").textContent="Google 登入回傳未完成。請用同一個瀏覽器重新登入。";
+    $("loginMessage").textContent="Google 登入未完成。請用同一個瀏覽器及已授權帳號重新登入。";
   }
   const cleaned=new URL(window.location.href);
   for (const name of ["code","error","error_code","error_description","state"]) cleaned.searchParams.delete(name);
@@ -1527,7 +1557,9 @@ $("loginGoogle").addEventListener("click",async()=>{
       redirectTo:landingUrl.href,queryParams:{prompt:"select_account"}
     }}));
   } catch(error) {
-    $("loginMessage").textContent=/provider|not enabled/i.test(error.message)?"Google 登入目前無法使用。請聯絡帳本管理者。":error.message;
+    $("loginMessage").textContent=error.message.includes(deniedEmailCode)
+      ? deniedEmailMessage
+      : /provider|not enabled/i.test(error.message)?"Google 登入目前無法使用。請聯絡帳本管理者。":error.message;
   } finally { $("loginGoogle").disabled=false; }
 });
 $("copyUserId").addEventListener("click",async()=>{
