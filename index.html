@@ -53,87 +53,63 @@ nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{m
 
 #cloudToolbar .identity-tools{margin-top:6px}
 #loginPanel{
-  --login-ink:#182d26;--login-muted:#50615a;--login-paper:#fcfaf5;
-  position:relative;isolation:isolate;
-  display:grid;place-items:center;min-height:100vh;min-height:100svh;
-  margin:0 calc(50% - 50vw);padding:32px clamp(16px,5vw,72px);
-  background:#eaece2;color:var(--login-ink);overflow:hidden;
-  background-image:radial-gradient(ellipse at 14% 10%,#f6f3e7,transparent 64%),
-    radial-gradient(ellipse at 100% 90%,#d8e0d2,transparent 48%);
+  position:relative;display:grid;place-items:center;
+  min-height:100vh;min-height:100svh;
+  padding:clamp(28px,8vh,76px) 22px;
+  color:#fff;background:#192b57;
+  background-image:linear-gradient(142deg,#111d38 0%,#192b57 36%,var(--blue) 73%,#5375ac 100%);
 }
-main:has(> #loginPanel:not([hidden])){max-width:none;padding:0;overflow-x:clip}
-.login-card{
-  width:min(100%,960px);min-height:516px;display:grid;grid-template-columns:1fr 1.05fr;
-  overflow:hidden;border:1px solid #dde1d6;border-radius:28px;
-  background:var(--login-paper);box-shadow:0 27px 76px -38px #233e32a3;
-}
-.login-art{
-  position:relative;display:grid;place-items:center;overflow:hidden;
-  background:radial-gradient(ellipse at 32% 18%,#365c49 0,transparent 64%),#162f27;
-}
-.login-art::before{
-  content:"";position:absolute;inset:24px;border:1px solid #e2d3a62e;border-radius:17px;
-  background:repeating-linear-gradient(0deg,transparent 0 35px,#f5ebcc09 35px 36px),
-    repeating-linear-gradient(90deg,transparent 0 35px,#f5ebcc09 35px 36px);
-}
-.login-book{
-  position:relative;width:174px;height:230px;transform:rotate(-13deg);
-  border:1px solid #bdac7a;border-radius:10px 17px 17px 10px;
-  background:linear-gradient(90deg,#9183552b 0 17px,transparent 17px),
-    repeating-linear-gradient(0deg,#fff 0 2px,#f7eed4 2px 4px);
-  box-shadow:20px 34px 44px #071c17a1;
-}
-.login-book::before{
-  content:"";position:absolute;inset:-7px 7px 8px -7px;border:1px solid #a28f5d;
-  border-radius:10px 17px 17px 10px;
-  background:linear-gradient(90deg,#152e27 0 18px,#bda773 18px 19px,transparent 19px),
-    linear-gradient(145deg,#496651,#213e34 74%);
-}
-.login-book::after{
-  content:"";position:absolute;top:38px;left:36px;right:32px;height:68px;
-  border:1px solid #c7b684;border-radius:6px;
-  background:linear-gradient(#c7b684,#c7b684) center 24px/38px 1px no-repeat,
-    linear-gradient(#c7b684,#c7b684) center 36px/58px 1px no-repeat,
-    linear-gradient(#c7b684,#c7b684) center 48px/24px 1px no-repeat;
-}
+main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 .login-content{
-  width:100%;max-width:500px;margin:auto;padding:54px clamp(30px,6vw,68px);
+  position:relative;width:min(100%,304px);text-align:center;
+}
+.login-mark{
+  width:64px;height:56px;margin:0 auto clamp(32px,8vh,68px);
+  position:relative;filter:drop-shadow(0 6px 10px #0c183b55);
+}
+.login-mark::before,.login-mark::after{
+  content:"";position:absolute;top:0;bottom:0;width:50%;
+}
+.login-mark::before{
+  left:0;clip-path:polygon(7% 4%,100% 26%,100% 100%,7% 76%);
+  background:linear-gradient(155deg,#fff,#dce8ff);
+}
+.login-mark::after{
+  right:0;clip-path:polygon(0 26%,93% 4%,93% 76%,0 100%);
+  background:repeating-linear-gradient(0deg,transparent 0 4px,#294e86 4px 5px) center/13px 15px no-repeat,
+    linear-gradient(155deg,#aec8f4,#86a8df);
 }
 .login-content h1{
-  margin:0 0 12px;font-size:clamp(36px,5vw,54px);font-weight:780;line-height:1.22;letter-spacing:.055em;
+  margin:0;font-size:clamp(30px,5vw,38px);font-weight:750;line-height:1.25;
+  letter-spacing:.12em;padding-inline-start:.12em;
 }
-.login-intro{margin:0 0 36px;font-size:16px;color:var(--login-muted)}
+.login-actions{
+  margin-top:clamp(24px,5vh,40px);padding-top:20px;
+  border-top:1px solid #edf4ff36;
+}
 .google-login{
-  display:flex;align-items:center;justify-content:center;gap:12px;width:100%;
-  min-height:54px;padding:12px 16px;border:1px solid #c5cdc3;border-radius:12px;
-  background:#fff;color:#26362e;font-size:16px;font-weight:700;
-  box-shadow:0 3px 7px #233e320c;transition:background .18s,border-color .18s,box-shadow .18s;
+  display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  min-height:52px;padding:10px 14px;border:1px solid #fff9;border-radius:9px;
+  background:#edf3ff;color:#192b57;font-size:16px;font-weight:750;
+  box-shadow:0 5px 18px #0d1e4429;transition:background-color .18s,border-color .18s;
 }
-.google-login svg{width:20px;height:20px;flex:none}
-.google-login:hover:not(:disabled){background:#f4f7f1;border-color:#648473;box-shadow:0 4px 10px #233e321a}
-.google-login:focus-visible{outline:3px solid #557a65;outline-offset:4px}
-#googleLocalHint,#loginMessage{margin:16px 0 0;color:var(--login-muted);font-size:14px;overflow-wrap:anywhere}
-#loginMessage:empty{min-height:0;margin:0}
-@media(max-width:650px){
-  #loginPanel{padding:20px 16px}
-  .login-card{max-width:420px;min-height:0;grid-template-columns:minmax(0,1fr);border-radius:22px}
-  .login-art{min-height:190px}
-  .login-art::before{inset:14px}
-  .login-book{width:106px;height:132px}
-  .login-book::after{top:26px;left:25px;right:23px;height:43px;background-size:22px 1px,34px 1px,14px 1px;background-position:center 12px,center 20px,center 28px}
-  .login-content{padding:32px 26px 36px}
-  .login-intro{margin-bottom:24px}
+.google-login svg{width:19px;height:19px;flex:none}
+.google-login:hover:not(:disabled){background:#fff;border-color:#fff}
+.google-login:focus-visible{outline:3px solid #fff;outline-offset:5px}
+.google-login:disabled{background:#c8d7ee;color:#33466c;opacity:1}
+#loginPanel #googleLocalHint,#loginPanel #loginMessage{
+  display:block;margin:12px 0 0;color:#fff;font-size:14px;overflow-wrap:anywhere;
 }
+#loginPanel #loginMessage:empty{min-height:0;margin:0}
 </style>
 </head>
 <body><main>
 <header id="appHeader" hidden><div class="grid"><h1>牌單日帳</h1><label id="datePicker" hidden>帳務日期<input type="date" id="day"></label></div></header>
 <section id="loginPanel" aria-labelledby="loginTitle">
-  <div class="login-card">
-    <div class="login-art" aria-hidden="true"><div class="login-book"></div></div>
-    <div class="login-content">
-      <h1 id="loginTitle">牌單日帳</h1>
-      <p class="login-intro">登入共用帳本，查看每日結算。</p>
+  <div class="login-content">
+    <div class="login-mark" aria-hidden="true"></div>
+    <h1 id="loginTitle">牌單日帳</h1>
+    <div class="login-actions">
       <button id="loginGoogle" class="google-login" type="button" disabled>
         <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
           <path fill="#4285f4" d="M46 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.4c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-4 6.8-9.8 6.8-16.4z"/>
