@@ -51,32 +51,102 @@ nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{m
 
 .cloud-toolbar{background:#eef3fb}.cloud-toolbar .actions{margin-top:0}.cloud-toolbar select{min-width:0}.cloud-toolbar p{margin:4px 0 0}.cloud-toolbar output:empty{display:none}.cloud-toolbar output{overflow-wrap:anywhere}#cloudApp[inert]{opacity:.78}#memberList li{margin:5px 0}#memberList button{margin-left:8px}.cloud-toolbar .grid{align-items:end}
 
-.google-login{background:#fff;color:#24395d;border:2px solid #224782;padding:10px 20px;font-size:22px}
-.google-login:hover:not(:disabled){background:#edf3ff}.login-details{margin-top:18px}.config-value{overflow-wrap:anywhere}
-#loginPanel button{margin-bottom:4px}#cloudToolbar .identity-tools{margin-top:6px}
+#cloudToolbar .identity-tools{margin-top:6px}
+#loginPanel{
+  --login-ink:#182d26;--login-muted:#50615a;--login-paper:#fcfaf5;
+  position:relative;isolation:isolate;
+  display:grid;place-items:center;min-height:100vh;min-height:100svh;
+  margin:0 calc(50% - 50vw);padding:32px clamp(16px,5vw,72px);
+  background:#eaece2;color:var(--login-ink);overflow:hidden;
+  background-image:radial-gradient(ellipse at 14% 10%,#f6f3e7,transparent 64%),
+    radial-gradient(ellipse at 100% 90%,#d8e0d2,transparent 48%);
+}
+main:has(> #loginPanel:not([hidden])){max-width:none;padding:0;overflow-x:clip}
+.login-card{
+  width:min(100%,960px);min-height:516px;display:grid;grid-template-columns:1fr 1.05fr;
+  overflow:hidden;border:1px solid #dde1d6;border-radius:28px;
+  background:var(--login-paper);box-shadow:0 27px 76px -38px #233e32a3;
+}
+.login-art{
+  position:relative;display:grid;place-items:center;overflow:hidden;
+  background:radial-gradient(ellipse at 32% 18%,#365c49 0,transparent 64%),#162f27;
+}
+.login-art::before{
+  content:"";position:absolute;inset:24px;border:1px solid #e2d3a62e;border-radius:17px;
+  background:repeating-linear-gradient(0deg,transparent 0 35px,#f5ebcc09 35px 36px),
+    repeating-linear-gradient(90deg,transparent 0 35px,#f5ebcc09 35px 36px);
+}
+.login-book{
+  position:relative;width:174px;height:230px;transform:rotate(-13deg);
+  border:1px solid #bdac7a;border-radius:10px 17px 17px 10px;
+  background:linear-gradient(90deg,#9183552b 0 17px,transparent 17px),
+    repeating-linear-gradient(0deg,#fff 0 2px,#f7eed4 2px 4px);
+  box-shadow:20px 34px 44px #071c17a1;
+}
+.login-book::before{
+  content:"";position:absolute;inset:-7px 7px 8px -7px;border:1px solid #a28f5d;
+  border-radius:10px 17px 17px 10px;
+  background:linear-gradient(90deg,#152e27 0 18px,#bda773 18px 19px,transparent 19px),
+    linear-gradient(145deg,#496651,#213e34 74%);
+}
+.login-book::after{
+  content:"";position:absolute;top:38px;left:36px;right:32px;height:68px;
+  border:1px solid #c7b684;border-radius:6px;
+  background:linear-gradient(#c7b684,#c7b684) center 24px/38px 1px no-repeat,
+    linear-gradient(#c7b684,#c7b684) center 36px/58px 1px no-repeat,
+    linear-gradient(#c7b684,#c7b684) center 48px/24px 1px no-repeat;
+}
+.login-content{
+  width:100%;max-width:500px;margin:auto;padding:54px clamp(30px,6vw,68px);
+}
+.login-content h1{
+  margin:0 0 12px;font-size:clamp(36px,5vw,54px);font-weight:780;line-height:1.22;letter-spacing:.055em;
+}
+.login-intro{margin:0 0 36px;font-size:16px;color:var(--login-muted)}
+.google-login{
+  display:flex;align-items:center;justify-content:center;gap:12px;width:100%;
+  min-height:54px;padding:12px 16px;border:1px solid #c5cdc3;border-radius:12px;
+  background:#fff;color:#26362e;font-size:16px;font-weight:700;
+  box-shadow:0 3px 7px #233e320c;transition:background .18s,border-color .18s,box-shadow .18s;
+}
+.google-login svg{width:20px;height:20px;flex:none}
+.google-login:hover:not(:disabled){background:#f4f7f1;border-color:#648473;box-shadow:0 4px 10px #233e321a}
+.google-login:focus-visible{outline:3px solid #557a65;outline-offset:4px}
+#googleLocalHint,#loginMessage{margin:16px 0 0;color:var(--login-muted);font-size:14px;overflow-wrap:anywhere}
+#loginMessage:empty{min-height:0;margin:0}
+@media(max-width:650px){
+  #loginPanel{padding:20px 16px}
+  .login-card{max-width:420px;min-height:0;grid-template-columns:minmax(0,1fr);border-radius:22px}
+  .login-art{min-height:190px}
+  .login-art::before{inset:14px}
+  .login-book{width:106px;height:132px}
+  .login-book::after{top:26px;left:25px;right:23px;height:43px;background-size:22px 1px,34px 1px,14px 1px;background-position:center 12px,center 20px,center 28px}
+  .login-content{padding:32px 26px 36px}
+  .login-intro{margin-bottom:24px}
+}
 </style>
 </head>
 <body><main>
-<header><div class="grid"><h1>牌單日帳</h1><label id="datePicker" hidden>帳務日期<input type="date" id="day"></label></div></header>
-<section class="panel" id="loginPanel">
-<h2>登入共用帳本</h2>
-<button id="loginGoogle" class="google-login" type="button">使用 Google 登入</button>
-<p id="googleLocalHint" class="hint" hidden>要使用 Google 登入，請從帳本的 HTTPS 網址，或透過本機網頁伺服器開啟這頁。</p>
-<output id="loginMessage" aria-live="polite"></output>
-<details class="login-details"><summary>使用 Email 和密碼登入</summary>
-<form id="loginForm">
-<div class="grid"><label>Email<input id="loginEmail" type="email" autocomplete="username" required></label>
-<label>密碼<input id="loginPassword" type="password" autocomplete="current-password" required></label></div>
-<button id="loginButton" type="submit">登入</button>
-</form>
-</details>
-<details class="login-details"><summary>管理者設定 Google 登入</summary>
-<p class="hint">在 Google Cloud 的 OAuth 網頁用戶端填入 Supabase 回呼網址，再把 Client ID 和 Client Secret 存到 Supabase 的 Google Provider。</p>
-<label>Google Cloud 的 Supabase 回呼網址<input id="providerCallback" class="config-value" readonly></label>
-<label>Supabase 的帳本 Redirect URL<input id="appRedirect" class="config-value" readonly></label>
-<p id="oauthSetupLocal" class="hint" hidden>如果正在用瀏覽器直接開這個 HTML，可在檔案所在資料夾以終端機執行 <code>py -m http.server 8765 --bind 127.0.0.1</code>，再開啟上方本機網址。此步驟需要 Python。</p>
-</details>
-<button id="exportLegacy" type="button" class="secondary" hidden>下載這台裝置的舊版備份</button>
+<header id="appHeader" hidden><div class="grid"><h1>牌單日帳</h1><label id="datePicker" hidden>帳務日期<input type="date" id="day"></label></div></header>
+<section id="loginPanel" aria-labelledby="loginTitle">
+  <div class="login-card">
+    <div class="login-art" aria-hidden="true"><div class="login-book"></div></div>
+    <div class="login-content">
+      <h1 id="loginTitle">牌單日帳</h1>
+      <p class="login-intro">登入共用帳本，查看每日結算。</p>
+      <button id="loginGoogle" class="google-login" type="button" disabled>
+        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+          <path fill="#4285f4" d="M46 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.4c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-4 6.8-9.8 6.8-16.4z"/>
+          <path fill="#34a853" d="M24 47c6.2 0 11.4-2.1 15.2-6.1l-7.3-5.6c-2.1 1.4-4.8 2.2-7.9 2.2-6 0-11.1-4.1-12.9-9.5H3.6v5.8C7.4 41.6 15.1 47 24 47z"/>
+          <path fill="#fbbc05" d="M11.1 28c-.5-1.4-.8-2.8-.8-4.5s.3-3.1.8-4.5v-5.8H3.6C1.9 16.3 1 19.8 1 23.5s.9 7.2 2.6 10.3l7.5-5.8z"/>
+          <path fill="#ea4335" d="M24 9.5c3.4 0 6.4 1.2 8.8 3.4l6.6-6.5C35.4 2.7 30.2 0 24 0 15.1 0 7.4 5.4 3.6 13.2l7.5 5.8C12.9 13.6 18 9.5 24 9.5z"/>
+        </svg>
+        使用 Google 登入
+      </button>
+      <p id="googleLocalHint" hidden>請從牌單日帳的 HTTPS 網址開啟 Google 登入。</p>
+      <output id="loginMessage" aria-live="polite"></output>
+    </div>
+  </div>
 </section>
 <section class="panel cloud-toolbar" id="cloudToolbar" hidden>
 <div class="grid"><label>目前帳本<select id="workspace"></select></label>
@@ -86,6 +156,7 @@ nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{m
 <label>加入共用帳本用的 User ID<input id="myUserId" readonly></label>
 <button id="copyUserId" type="button" class="secondary">複製我的 User ID</button><output id="copyUserMessage" aria-live="polite"></output>
 </details>
+<button id="exportLegacy" type="button" class="secondary" hidden>下載這台裝置的舊版備份</button>
 <output id="cloudMessage" aria-live="polite"></output>
 </section>
 <div id="cloudApp" hidden>
@@ -447,7 +518,6 @@ const onLoopback=["localhost","127.0.0.1","[::1]"].includes(pageUrl.hostname);
 const oauthOnWeb=pageUrl.protocol==="https:"||(pageUrl.protocol==="http:"&&onLoopback);
 const landingUrl=new URL(pageUrl);
 landingUrl.search=""; landingUrl.hash="";
-const localLanding="http://127.0.0.1:8765/paidan-settlement.html";
 const callbackHash=new URLSearchParams(pageUrl.hash.slice(1));
 const oauthQuery=(name)=>pageUrl.searchParams.get(name)??callbackHash.get(name);
 const oauthReturn=Boolean(oauthQuery("code")||oauthQuery("error")||oauthQuery("error_description"));
@@ -1190,7 +1260,6 @@ async function response(query) {
   if (error) {
     if (["PGRST202","PGRST205","42P01"].includes(error.code)) throw Error("Supabase 找不到共用帳本的資料表或函式，請先執行最新版共用 SQL。");
     if (error.code==="42501") throw Error("這個帳號無法操作選定帳本，請確認管理者已加入你的帳號。");
-    if (/invalid login credentials/i.test(error.message)) throw Error("Email 或密碼不正確。");
     if (/failed to fetch|networkerror|load failed/i.test(error.message)) throw Error("連線失敗，請確認網路後再試。");
     throw Error(error.message||"Supabase 暫時無法處理。");
   }
@@ -1363,7 +1432,8 @@ async function setSession(session) {
   currentUser=user;
   ready=false; activeWorkspace=null; listedWorkspaces=[];
   $("cloudApp").hidden=true; $("datePicker").hidden=true;
-  $("cloudToolbar").hidden=!user; $("loginPanel").hidden=!!user;
+  $("appHeader").hidden=!user; $("cloudToolbar").hidden=!user; $("loginPanel").hidden=!!user;
+  if (user) $("loginMessage").textContent="";
   state=emptyBook(); clearBookDrafts(); render();
   $("myUserId").value=user?.id??"";
   $("copyUserMessage").textContent="";
@@ -1390,7 +1460,7 @@ function handleOAuthReturn(session) {
   if (!oauthReturn) return;
   const error=oauthQuery("error_description")||oauthQuery("error");
   if (error && !session) {
-    $("loginMessage").textContent="Google 登入未完成。"+(oauthQuery("error")==="access_denied"?"請重新點選 Google 登入並授權。":"請確認 Supabase 的 Google Provider 和回傳網址設定。");
+    $("loginMessage").textContent="Google 登入未完成。"+(oauthQuery("error")==="access_denied"?"請重新點選 Google 登入並授權。":"請稍後再試，或聯絡帳本管理者。");
   } else if (!session) {
     $("loginMessage").textContent="Google 登入回傳未完成。請用同一個瀏覽器重新登入。";
   }
@@ -1400,10 +1470,7 @@ function handleOAuthReturn(session) {
   try { history.replaceState(null,"",cleaned); } catch {}
 }
 function startCloud() {
-  $("providerCallback").value=projectUrl+"/auth/v1/callback";
-  $("appRedirect").value=oauthOnWeb?landingUrl.href:localLanding;
   $("googleLocalHint").hidden=oauthOnWeb;
-  $("oauthSetupLocal").hidden=oauthOnWeb;
   $("loginGoogle").disabled=!db||!oauthOnWeb;
   if (!db) { $("loginMessage").textContent="無法載入登入服務，請重新開啟。"; return; }
   db.auth.onAuthStateChange((event,session)=>{
@@ -1426,7 +1493,7 @@ $("loginGoogle").addEventListener("click",async()=>{
       redirectTo:landingUrl.href,queryParams:{prompt:"select_account"}
     }}));
   } catch(error) {
-    $("loginMessage").textContent=/provider|not enabled/i.test(error.message)?"Google 登入尚未啟用。請在 Supabase 的 Google Provider 完成設定。":error.message;
+    $("loginMessage").textContent=/provider|not enabled/i.test(error.message)?"Google 登入目前無法使用。請聯絡帳本管理者。":error.message;
   } finally { $("loginGoogle").disabled=false; }
 });
 $("copyUserId").addEventListener("click",async()=>{
@@ -1439,18 +1506,6 @@ $("copyUserId").addEventListener("click",async()=>{
     field.focus(); field.select();
     $("copyUserMessage").textContent="已選取 User ID，請按 Ctrl+C 或使用複製。";
   }
-});
-$("loginForm").addEventListener("submit",async event=>{
-  event.preventDefault();
-  if (!db) return;
-  $("loginButton").disabled=true;
-  $("loginMessage").textContent="登入中…";
-  try {
-    await response(db.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value}));
-    $("loginPassword").value="";
-    $("loginMessage").textContent="";
-  } catch(error) { $("loginMessage").textContent=error.message; }
-  finally { $("loginButton").disabled=false; }
 });
 $("signOut").addEventListener("click",async()=>{
   if (busy||!db) return;
