@@ -53,50 +53,48 @@ nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{m
 
 #cloudToolbar .identity-tools{margin-top:6px}
 #loginPanel{
-  position:relative;display:grid;place-items:center;
+  display:grid;place-items:center;
   min-height:100vh;min-height:100svh;
-  padding:clamp(28px,8vh,76px) 22px;
+  padding:clamp(24px,7svh,64px) 24px;
   color:#fff;background:#192b57;
-  background-image:linear-gradient(142deg,#111d38 0%,#192b57 36%,var(--blue) 73%,#5375ac 100%);
+  background-image:linear-gradient(144deg,#121e37 0%,#192b57 34%,#29477d 66%,#5679ab 100%);
 }
 main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
-.login-content{
-  position:relative;width:min(100%,304px);text-align:center;
-}
+.login-content{width:min(100%,272px);text-align:center}
 .login-mark{
-  width:64px;height:56px;margin:0 auto clamp(32px,8vh,68px);
-  position:relative;filter:drop-shadow(0 6px 10px #0c183b55);
+  position:relative;width:48px;height:58px;
+  margin:0 auto clamp(29px,7svh,62px);
+  filter:drop-shadow(0 7px 10px #101d3955);
 }
 .login-mark::before,.login-mark::after{
   content:"";position:absolute;top:0;bottom:0;width:50%;
 }
 .login-mark::before{
-  left:0;clip-path:polygon(7% 4%,100% 26%,100% 100%,7% 76%);
-  background:linear-gradient(155deg,#fff,#dce8ff);
+  left:0;clip-path:polygon(0 0,100% 32%,100% 100%,0 67%);
+  background:linear-gradient(145deg,#fff,#e9f1ff);
 }
 .login-mark::after{
-  right:0;clip-path:polygon(0 26%,93% 4%,93% 76%,0 100%);
-  background:repeating-linear-gradient(0deg,transparent 0 4px,#294e86 4px 5px) center/13px 15px no-repeat,
-    linear-gradient(155deg,#aec8f4,#86a8df);
+  right:0;clip-path:polygon(0 32%,100% 0,100% 67%,0 100%);
+  background:linear-gradient(155deg,#bed0e8,#91aacf);
 }
 .login-content h1{
-  margin:0;font-size:clamp(30px,5vw,38px);font-weight:750;line-height:1.25;
-  letter-spacing:.12em;padding-inline-start:.12em;
+  margin:0;font-size:clamp(28px,4.5vw,34px);font-weight:700;line-height:1.35;
+  letter-spacing:.11em;padding-inline-start:.11em;
 }
 .login-actions{
-  margin-top:clamp(24px,5vh,40px);padding-top:20px;
-  border-top:1px solid #edf4ff36;
+  margin-top:clamp(19px,4svh,34px);padding-top:18px;
+  border-top:1px solid #eaf2ff45;
 }
 .google-login{
   display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
-  min-height:52px;padding:10px 14px;border:1px solid #fff9;border-radius:9px;
-  background:#edf3ff;color:#192b57;font-size:16px;font-weight:750;
-  box-shadow:0 5px 18px #0d1e4429;transition:background-color .18s,border-color .18s;
+  min-height:50px;padding:10px 14px;border:1px solid #f3f7ff;border-radius:8px;
+  background:#eef4ff;color:#192b57;font-size:16px;font-weight:700;
+  transition:background-color .18s,border-color .18s;
 }
-.google-login svg{width:19px;height:19px;flex:none}
+.google-login svg{width:18px;height:18px;flex:none}
 .google-login:hover:not(:disabled){background:#fff;border-color:#fff}
 .google-login:focus-visible{outline:3px solid #fff;outline-offset:5px}
-.google-login:disabled{background:#c8d7ee;color:#33466c;opacity:1}
+.google-login:disabled{background:#cad7eb;border-color:#cad7eb;color:#35486b;opacity:1}
 #loginPanel #googleLocalHint,#loginPanel #loginMessage{
   display:block;margin:12px 0 0;color:#fff;font-size:14px;overflow-wrap:anywhere;
 }
