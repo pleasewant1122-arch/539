@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>牌單日帳</title>
+<style>
+:root{color-scheme:light;--ink:#19243a;--muted:#52617b;--line:#dbe3ed;--blue:#254ec3;--paper:#fff}
+*{box-sizing:border-box}body{margin:0;background:#f0f4fa;color:var(--ink);font:16px/1.5 system-ui,"Microsoft JhengHei",sans-serif}
+main{max-width:1060px;margin:auto;padding:24px 16px 48px}h1,h2,h3,p{margin:0 0 12px}h1{font-size:clamp(26px,5vw,38px)}h2{font-size:21px}h3{font-size:17px}
+header,.panel{padding:20px;margin-bottom:14px;border-radius:16px}header{background:#192b57;color:white}.panel{background:var(--paper);border:1px solid var(--line)}
+.grid,.stats,.rates{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr));gap:12px}.rates{margin:12px 0}.stats strong{display:block;font-size:23px}
+label{display:block;font-weight:600}input,select,textarea,button{font:inherit}input:not([type=checkbox]),select,textarea{width:100%;padding:8px 10px;border:1px solid #aebcd0;border-radius:8px;background:white;color:var(--ink);margin:4px 0 8px}textarea{min-height:122px;resize:vertical}button:disabled{cursor:default;opacity:.55}button{cursor:pointer;background:var(--blue);color:white;border:1px solid var(--blue);border-radius:8px;padding:8px 13px;font-weight:650}.secondary{background:white;color:var(--blue);margin:4px 4px 4px 0}
+.hint,small{color:var(--muted)}.issue{color:#982e15}.good{color:#126248}.bad{color:#9d2427}.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:9px;border-bottom:1px solid var(--line);vertical-align:top;min-width:95px}td:first-child{min-width:155px}summary{cursor:pointer;font-weight:650}.cards>div{background:#eef3fc;padding:12px;border-radius:10px}.entry{padding:12px 0;border-top:1px solid var(--line)}.entry label{display:inline-block;margin-right:14px}.entry button{margin:5px 6px 3px 0}img{max-width:100%;max-height:370px;object-fit:contain}output{display:block;min-height:1.5em;margin-top:8px}.total{margin-top:16px}pre{white-space:pre-wrap;overflow-wrap:anywhere}ul{padding-left:22px}.spaced{margin-top:12px}
+
+[hidden]{display:none!important}header{padding:20px 22px;margin-bottom:10px}header h1{margin:0}header .grid{align-items:center;grid-template-columns:1fr minmax(140px,190px)}header input{color-scheme:light}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}nav button{flex:1;background:white;color:var(--ink);border-color:var(--line);white-space:nowrap}nav button[aria-selected="true"]{background:var(--blue);color:white;border-color:var(--blue)}
+h2{margin-bottom:14px}.muted-bg{background:#f5f7fb;border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}.actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px}
+.rateGrid{display:grid;grid-template-columns:minmax(62px,1fr) repeat(3,minmax(64px,1fr));gap:6px 9px;align-items:center}.rateGrid input{margin:0}.rateGrid label{font-weight:400}.heroStat{background:#172d62!important;color:#fff}.heroStat .good,.heroStat .bad{color:#fff}.cashHelp{margin:12px 0 0}.note{padding:10px 12px;border-radius:8px;background:#f2f5fb}.ledger-controls{margin-top:12px}.panel details+details{margin-top:12px}.panel details>summary{margin-bottom:8px}
+@media(max-width:500px){main{padding:12px 10px 32px}.panel,header{padding:14px}.grid,.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.wide{grid-column:1/-1}nav button{padding:8px 6px;font-size:14px}.rates{grid-template-columns:1fr}.entry button{margin-right:4px}}
+
+.order-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0 0 16px;padding:4px;background:#edf2fa;border-radius:12px}.order-switch button{padding:8px 4px;border-color:transparent;background:transparent;color:var(--ink)}.order-switch button[aria-pressed="true"]{background:#254ec3;color:white}
+.order-step{border-top:1px solid var(--line);padding-top:14px;margin-top:12px}.order-step h3{margin-bottom:8px}.star-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.order-preview{margin:6px 0 14px;padding:8px 12px;background:#eef3fc;border-radius:10px}.order-preview p{margin:3px 0}.order-preview td:first-child,.order-preview th:first-child{min-width:65px}.order-preview td,.order-preview th{min-width:70px}.column-field{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end}.column-field input{min-width:0}.column-field button{margin-bottom:8px;white-space:nowrap}.order-panel output:empty{display:none}
+@media(max-width:500px){.star-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.order-switch button{font-size:15px}#orderColumns{grid-template-columns:1fr}.order-preview td,.order-preview th{padding:6px}}
+
+.daily-units{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:12px}.compare-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#fafcff}.compare-card h4{margin:0 0 8px}.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin:0}.compare-grid div{min-width:0}.compare-grid dt{font-weight:600;color:var(--muted)}.compare-grid dd{margin:4px 0 0;line-height:1.8;overflow-wrap:anywhere}.compare-lines{margin:8px 0 0;padding:8px 0 0;list-style:none;border-top:1px solid var(--line)}.compare-lines li+li{margin-top:5px}.hit-number{background:#d5f4e6;color:#0c5738;border-radius:4px;padding:1px 3px;font-weight:700}.winning-combos{color:#126248;font-weight:650}
+@media(max-width:550px){nav button{flex:1 1 auto}.compare-grid{grid-template-columns:1fr}}
+
+/* Larger, high-contrast controls and a consistent heading hierarchy. */
+:root{--ink:#1b2637;--muted:#394b68;--line:#bdcbe0;--blue:#1d459d}
+body{font-size:19px;line-height:1.58}main{max-width:1230px;padding:22px 20px 50px}
+header,.panel{padding:24px}header h1{color:#fff;font-size:clamp(32px,5vw,48px);font-weight:800}
+h2{font-size:clamp(26px,4.2vw,34px);font-weight:800;color:#142b63;border-bottom:2px solid #cfdaec;padding:0 0 10px;margin-bottom:16px}
+h3,.order-step h3{font-size:clamp(22px,3.5vw,26px);font-weight:800;color:#224889;margin:0 0 10px}
+h4,.compare-card h4{font-size:22px;font-weight:750;color:#263e67;margin:0 0 8px}
+small,.hint{font-size:17px;color:var(--muted)}.stats strong{font-size:clamp(24px,4vw,32px);overflow-wrap:anywhere;color:#142b63}
+.stats .bad{color:#9a1b21}.heroStat strong{color:#fff}.stats span{font-weight:700}
+button{min-height:48px;font-weight:750}input:not([type=checkbox]),select{min-height:49px;padding:9px 12px}
+input[type=checkbox]{width:23px;height:23px;vertical-align:middle;margin:0 5px 0 0;accent-color:var(--blue)}
+textarea{min-height:150px;padding:10px 12px}label,summary{font-weight:730}summary{color:#173673}
+nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{min-width:0}.rateGrid strong{overflow-wrap:anywhere}
+:focus-visible{outline:3px solid #a0470d;outline-offset:3px}.compare-card{padding:16px}.hit-number{padding:2px 5px}
+.photo-thumb{margin:0}.photo-thumb img{display:block;width:100%;object-fit:contain}.photo-thumb figcaption{overflow-wrap:anywhere;color:var(--muted)}
+@media(max-width:550px){
+  main{padding:10px 10px 32px}header,.panel{padding:14px}
+  header .grid{grid-template-columns:minmax(0,1fr) minmax(130px,0.75fr);gap:8px}header input{padding-left:5px;padding-right:5px}
+  nav button{flex:1 1 calc(33% - 6px);padding:6px;font-size:18px}
+  .order-switch button{font-size:18px;padding:6px}textarea{min-height:130px}
+  .rateGrid{grid-template-columns:minmax(47px,1fr) repeat(3,minmax(0,1fr));font-size:16px;gap:5px}
+  .rateGrid input{padding-left:4px;padding-right:4px}
+}
+</style>
+</head>
+<body><main>
+<header><div class="grid"><h1>牌單日帳</h1><label>帳務日期<input type="date" id="day"></label></div></header>
+<nav aria-label="功能選單">
+<button type="button" data-view="today" aria-selected="true">今日結算</button>
+<button type="button" data-view="orders">加單</button>
+<button type="button" data-view="calculator">算牌</button>
+<button type="button" data-view="ledger">流水帳</button>
+<button type="button" data-view="rates">後台設定</button>
+</nav>
+<div id="view-today">
+<section class="panel"><h2>輸入開獎號碼</h2>
+<div class="grid"><label>539<input id="draw539" placeholder="05.17.26.32.38"></label><label>大樂透主號<input id="drawlotto" placeholder="03.14.15.23.43.48"></label><label>天天樂<input id="drawdaily" placeholder="輸入開獎號碼"></label></div>
+</section>
+<section class="panel"><h2>當日結算</h2>
+<div id="dailyUnits" class="stats cards daily-units" aria-label="今日二星及三星總支數"></div>
+<div id="accountCards" class="stats cards"></div>
+<p id="recordedNet" class="hint cashHelp" hidden></p>
+<div class="actions"><button id="postDay">儲存本日結算</button><button id="toOrders" class="secondary">加入牌單</button></div>
+<output id="accountMessage" aria-live="polite"></output>
+<details><summary>補登已知總額</summary><div class="grid">
+<label>全日總成本<input id="manualCost" type="number" min="0" step="0.01" placeholder="留空則用牌單計算"></label>
+<label>全日中獎金額<input id="manualPrize" type="number" min="0" step="0.01" placeholder="留空則用對獎結果"></label>
+</div></details>
+<div id="results"></div>
+</section></div>
+<div id="view-orders" hidden>
+<section class="panel order-panel"><h2>加單</h2>
+<div class="order-switch" role="group" aria-label="選擇操作">
+<button type="button" data-order-view="direct" aria-pressed="true">輸入一筆</button>
+<button type="button" data-order-view="paste" aria-pressed="false">照片／貼文字</button>
+</div>
+<div id="orderIdentity" class="grid">
+<label>彩種<select id="defaultGame"></select></label>
+<label>客人名稱或代號（選填）<input id="customer" maxlength="80" placeholder="例如 阿明"></label>
+</div>
+<div id="order-direct">
+<div class="order-step"><h3>選玩法、填號碼</h3>
+<label>玩法<select id="orderMode"><option value="full">連碰｜一整組號碼互碰</option><option value="column">立柱｜從不同柱各取一碼</option><option value="car">全車｜整組計車數</option><option value="single">單號車｜每個號碼各自計車數</option></select></label>
+<p id="orderHelp" class="hint"></p>
+<label id="singleGroup">這一組的號碼<input id="quickNumbers" placeholder="例如 01、02、03、04"></label>
+<div id="columnGroup" hidden><div id="orderColumns" class="grid"></div><button id="addColumn" type="button" class="secondary">＋ 再加一柱</button></div>
+</div>
+<div class="order-step"><h3 id="quantityTitle">填下單支數</h3>
+<div id="starInputs"><p class="hint">客人寫「二 × 0.5」，就在二星填 0.5。沒下的星別留空。</p>
+<div class="grid star-grid"><label>二星<input id="quickStar2" type="number" inputmode="decimal" step="any" min="0" placeholder="如 0.5"></label><label>三星<input id="quickStar3" type="number" inputmode="decimal" step="any" min="0"></label><label>四星<input id="quickStar4" type="number" inputmode="decimal" step="any" min="0"></label></div></div>
+<label id="carInput" hidden><span id="carLabel">車數</span><input id="quickCar" type="number" inputmode="decimal" step="any" min="0" placeholder="如 0.2"></label>
+</div>
+<div id="orderPreview" class="order-preview" aria-live="polite" hidden></div>
+<button id="quickAdd" type="button">加入這筆牌單</button>
+</div>
+<div id="order-paste" hidden>
+<div class="order-step">
+<details><summary>對照紙本照片</summary>
+<p class="hint">選擇照片後，可一邊看原圖，一邊在下方輸入號碼。</p>
+<label>選擇照片，可一次選多張<input id="photos" type="file" accept="image/*" multiple></label>
+<div id="photoList" class="grid"></div>
+</details></div>
+<div class="order-step"><h3>牌單文字</h3>
+<p class="hint">可直接貼上客人的文字。跨彩種可用「539：」「大樂透：」「天天樂：」分段。</p>
+<label>核對文字、補上缺漏<textarea id="orders" placeholder="05、25碰14、26碰36、39&#10;二×0.75&#10;三×0.75"></textarea></label>
+<label><input id="paperNotation" type="checkbox"> 手動轉錄紙本簡寫（30 換成 0.3）</label>
+</div>
+<div class="actions"><button id="add" type="button">加入文字牌單</button><button id="cancelEdit" type="button" class="secondary" hidden>取消修改</button></div>
+</div>
+<output id="message" aria-live="polite"></output>
+</section>
+<section class="panel" id="entryPanel"><h2>這一天已加入的牌單 <small id="entryCount"></small></h2><div id="entries"></div></section>
+</div>
+<div id="view-calculator" hidden><section class="panel"><h2>算牌</h2>
+<p class="hint">只填號碼有幾個，就能試算碰數和支數。這裡的結果不會加入帳務。</p>
+<div class="grid"><label>玩法<select id="quickMode"><option value="full">連碰</option><option value="column">立柱</option></select></label>
+<label><span id="quickCountLabel">號碼有幾個</span><input id="quickCounts" placeholder="例如 6"></label>
+<label>每一碰下幾支<input type="number" inputmode="decimal" id="quickWeight" min="0.0001" step="any" value="1"></label></div>
+<div id="quickResult" aria-live="polite"></div>
+</section></div>
+<div id="view-ledger" hidden>
+<section class="panel"><h2>流水帳與銷帳</h2>
+<p class="hint">前期結餘加本日盈虧。累計淨利達 200,000 元可銷帳，未銷的金額繼續結轉。</p>
+<div id="ledger"></div>
+<div class="grid ledger-controls"><label>銷帳金額<input id="writeAmount" type="number" min="0.01" step="0.01" value="200000"></label><label>備註<input id="writeNote" maxlength="120" placeholder="選填"></label></div>
+<button id="writeOff">登記選定日期的銷帳</button>
+<output id="ledgerMessage" aria-live="polite"></output>
+</section></div>
+<div id="view-rates" hidden>
+<section class="panel"><h2>後台設定</h2>
+<label>要設定的彩種<select id="rateGame"></select></label>
+<p class="hint">成本用來算當日收款。賠付基數 × 賠率 × 命中支數／車數，算出中獎金額。全車會把同一筆的命中號數乘進去。</p>
+<div id="rates" class="rates"></div>
+<details><summary>開獎與進位規則</summary><div class="grid">
+<label>尾數算法<select id="tails"><option value="">待確認</option><option value="expand">展開成個別號碼</option><option value="group">每個尾數算一個選項</option></select></label>
+<label>成本取整<select id="rounding"><option value="star">各玩法取整再加總</option><option value="total">加總後取整</option></select></label>
+<label>天天樂號碼上限<input id="dailyMax" type="number" min="1" max="99" step="1"></label><label>天天樂開獎顆數<input id="dailyCount" type="number" min="1" max="99" step="1"></label>
+</div></details>
+<div class="actions"><button id="saveRates">儲存設定</button></div>
+<output id="settingsMessage" aria-live="polite"></output>
+<div class="order-step"><h3>資料備份</h3>
+<p class="hint">換電腦、換瀏覽器或更換檔案位置時，可用備份搬移牌單、流水帳和設定。</p>
+<div class="actions"><button id="exportData" type="button" class="secondary">匯出備份</button>
+<label>匯入備份<input id="importData" type="file" accept=".json,application/json"></label></div>
+<output id="backupStatus" aria-live="polite"></output></div>
+</section></div>
+</main>
+<script>
+"use strict";
+const games = {539:"539", lotto:"大樂透", daily:"天天樂"};
+const types = {2:"二星",3:"三星",4:"四星",5:"全車",1:"單號車"};
+const keys = [2,3,4,5,1];
+const unitName = type => type===1 || type===5 ? "車" : "支";
+const threshold = 200000;
+const $ = id => document.getElementById(id);
+const gameKeys = Object.keys(games);
+const storeKey = "paidan-settlement-v1";
+const localDay = () => new Date().toLocaleDateString("sv-SE", {timeZone:"Asia/Taipei"});
+const numberFormat = new Intl.NumberFormat("zh-TW", {maximumFractionDigits:6});
+const fmt = number => numberFormat.format(number);
+const rounded = number => Math.round((number + Number.EPSILON) * 1e8) / 1e8;
+const normal = value => value.normalize("NFKC").replace(/[❎✖×✕]/gu,"x").replace(/[\uFE0F\uFE0E]/gu,"").trim();
+const gameName = value => ({539:"539", 今彩539:"539", 大樂:"lotto", 大樂透:"lotto", 天天:"daily", 天天樂:"daily"})[value];
+const star = value => ({二:2,三:3,四:4,2:2,3:3,4:4})[value];
+let state = {};
+try { state = JSON.parse(localStorage.getItem(storeKey) || "{}") || {}; } catch {}
+state.entries ??= [];
+state.fields ??= {};
+state.ledger ??= {};
+const fieldIds = ["day","draw539","drawlotto","drawdaily","tails","rounding","dailyMax","dailyCount","manualPrize","manualCost"];
+function node(tag, content, className) {
+  const el = document.createElement(tag);
+  if (content !== undefined) el.textContent = content;
+  if (className) el.className = className;
+  return el;
+}
+const example = {
+  2:{cost:72,base:100,prize:53},
+  3:{cost:63,base:100,prize:570},
+  4:{cost:100,base:100,prize:7500},
+  5:{cost:3800,base:3800,prize:5.5789}
+};
+function createRates() {
+  for (const [game,title] of Object.entries(games)) {
+    $("defaultGame").append(new Option(title,game));
+    $("rateGame").append(new Option(title,game));
+    const group = node("div",undefined,"rateGrid");
+    group.id = "rate-grid-"+game;
+    group.append(...["玩法","成本／單位","賠付基數","賠率倍率"].map(x=>node("strong",x)));
+    for (const type of keys) {
+      group.append(node("strong",types[type]));
+      for (const [name,label] of [["cost","成本"],["base","賠付基數"],["prize","賠率倍率"]]) {
+        const id = [name,game,type].join("-");
+        const field = node("input");
+        Object.assign(field,{id,type:"number",min:"0",step:name==="prize"?"any":"0.01"});
+        field.setAttribute("aria-label", title+" "+types[type]+" "+label);
+        const oldPrize = state.fields["prize-"+game+"-"+type];
+        const oldRate = oldPrize!==undefined && oldPrize!=="" && !Object.hasOwn(state.fields,"base-"+game+"-"+type);
+        const formula = example[type] || {};
+        field.value = String(oldRate && name==="base" ? 1 : formula[name] ?? "");
+        group.append(field);
+        fieldIds.push(id);
+      }
+    }
+    $("rates").append(group);
+  }
+}
+function save() {
+  for (const id of fieldIds) state.fields[id] = $(id).value;
+  try { localStorage.setItem(storeKey, JSON.stringify(state)); return true; }
+  catch {
+    const warning="此瀏覽器無法儲存資料。請記下帳務結果再關閉。";
+    for(const id of ["message","accountMessage","ledgerMessage","settingsMessage"]) $(id).textContent=warning;
+    return false;
+  }
+}
+function perHitPrize(key) {
+  const base=nonnegative("base-"+key), multiplier=nonnegative("prize-"+key);
+  return base===null || multiplier===null ? null : rounded(base*multiplier);
+}
+function readNumbers(raw) {
+  const source = raw.trim();
+  if (!source || !/^\d{1,2}(?:[\s、,，.。\-]+\d{1,2})*$/u.test(source)) throw Error("請確認號碼格式");
+  return source.split(/[\s、,，.。\-]+/u).map(Number);
+}
+function groupTokens(source) {
+  const text = source.trim().replace(/[、,，.。\s]+$/u,"");
+  const pieces = text.split(/[\s、,，.。\-]+/u);
+  if (pieces.some(piece => !/^\d{1,2}尾?$/u.test(piece))) throw Error("請確認號碼或分柱寫法");
+  const allTails = pieces.at(-1).endsWith("尾") && pieces.every(piece => /^\d尾?$/u.test(piece));
+  return pieces.map(piece => ({
+    value:parseInt(piece,10),
+    tail:piece.endsWith("尾") || allTails
+  }));
+}
+function parseGroups(source) {
+  const cleaned = source.replace(/立柱碰?|全碰/gu,"").trim();
+  const brackets = [...cleaned.matchAll(/\(([^()]+)\)/gu)];
+  if (brackets.length && cleaned.replace(/\([^()]+\)/gu,"").replace(/[\s碰xX]/gu,"") === "") {
+    return brackets.map(match => groupTokens(match[1]));
+  }
+  return cleaned.split(/碰|[xX]/u).map(groupTokens);
+}
+function parseOrders(raw, fallbackGame, paperNotation=false) {
+  const weight = value => paperNotation && /^\d{2,3}$/u.test(value) ? Number(value)/100 : Number(value);
+  const rows = [], errors = [];
+  let game = fallbackGame, parts = [], row = null;
+  function commit() {
+    if (row) rows.push(row);
+    row = null;
+  }
+  function pending() {
+    if (parts.length) errors.push("缺少玩法或數量｜" + parts.join(" "));
+    parts = [];
+  }
+  function open(numbers) {
+    if (!numbers.trim()) throw Error("缺少號碼");
+    const groups = parseGroups(numbers);
+    if (groups.length>16) throw Error("立柱最多 16 柱");
+    row = { game, groups, values:{}, original:numbers };
+  }
+  for (const original of raw.split(/\r?\n/u)) {
+    let line = normal(original);
+    if (!line || /^[-─—]{3,}$/u.test(line)) continue;
+    const head = line.match(/^(今彩\s*539|539|大樂透?|天天樂?)\s*:\s*/u);
+    if (head) {
+      commit();
+      pending();
+      game = gameName(head[1].replace(/\s/gu,""));
+      line = line.slice(head[0].length);
+      if (!line) continue;
+    }
+    if (/^(取消|作廢)/u.test(line)) { commit(); pending(); continue; }
+    try {
+      const fullCar=line.match(/^(.*?)\s*全車\s*[xX=]?\s*(\d+(?:\.\d+)?)$/u);
+      if (fullCar) {
+        commit();
+        open([...parts,fullCar[1]].join(" "));
+        parts=[];
+        if (row.groups.length!==1) throw Error("全車請輸入一組號碼");
+        row.values[5]=weight(fullCar[2]); commit(); continue;
+      }
+      const car = line.match(/^(.*?)\s*(?:各|坐|[xX]|車)\s*(\d+(?:\.\d+)?)\s*車?$/u);
+      if (car && (line.includes("車") || line.includes("各"))) {
+        commit();
+        if (!line.includes("車")) throw Error("請確認是否為單號車，確認後補上「車」");
+        open([...parts,car[1]].join(" "));
+        parts = [];
+        if (row.groups.length !== 1) throw Error("單號車請輸入一組號碼");
+        row.values[1] = weight(car[2]);
+        commit();
+        continue;
+      }
+      const carSuffix = line.match(/^(\([^()]+\))\s*車\s*(\d+(?:\.\d+)?)$/u);
+      if (carSuffix) {
+        commit(); pending(); open(carSuffix[1]);
+        row.values[1] = weight(carSuffix[2]); commit(); continue;
+      }
+      const amount = /([二三四]{1,3}|(?<![0-9.])[234]{1,3})\s*(?:星\s*[xX=]?|[xX=])\s*(\d+(?:\.\d+)?)/gu;
+      const matches = [...line.matchAll(amount)];
+      if (matches.length) {
+        const prefix = line.slice(0,matches[0].index).trim();
+        const suffix = line.slice(matches[0].index).replace(amount,"").replace(/[\s、,，車支]/gu,"");
+        if (suffix) throw Error("請確認玩法與數量");
+        if (prefix || parts.length) {
+          commit();
+          open([...parts,prefix].filter(Boolean).join(" "));
+          parts = [];
+        }
+        if (!row) throw Error("玩法前缺少號碼");
+        for (const [,stars,value] of matches) {
+          for (const code of stars) {
+            const kind = star(code);
+            if (row.values[kind] !== undefined) throw Error("同一筆重複填寫星別");
+            row.values[kind] = weight(value);
+          }
+        }
+        continue;
+      }
+      commit();
+      if (/[xX]\s*0\.\d+\s*$/u.test(line)) throw Error("請補上玩法，例如「10 x 0.1車」");
+      parts.push(line);
+    } catch (error) {
+      errors.push(error.message + "｜" + original.trim());
+      row = null;
+      parts = [];
+    }
+  }
+  commit();
+  pending();
+  return {rows,errors};
+}
+function nonnegative(id) {
+  const field = $(id);
+  if (field.value === "" || !field.validity.valid) return null;
+  const value = Number(field.value);
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+function config(game) {
+  if (game === "539") return {limit:39,count:5};
+  if (game === "lotto") return {limit:49,count:6};
+  return {limit:nonnegative("dailyMax"),count:nonnegative("dailyCount")};
+}
+function drawFor(game) {
+  if (!$("draw"+game).value.trim()) return {values:null,issue:"尚未輸入開獎號碼"};
+  try {
+    const {limit,count} = config(game);
+    if (!limit || !count || count > limit) throw Error("請填入天天樂的號碼上限與開獎顆數");
+    const values = readNumbers(normal($("draw"+game).value));
+    if (values.length !== count || new Set(values).size !== count || values.some(n => n < 1 || n > limit)) {
+      throw Error("開獎號碼須為 " + count + " 個不重複的 01–" + limit + " 號碼");
+    }
+    return {values,issue:""};
+  } catch (err) { return {values:null,issue:err.message}; }
+}
+function choose(items,count,start=0) {
+  if (count === 0) return [[]];
+  const result = [];
+  for (let i=start;i<=items.length-count;i++) for (const rest of choose(items,count-1,i+1)) result.push([items[i],...rest]);
+  return result;
+}
+function expandGroups(groups, game) {
+  const max = config(game).limit;
+  if (!max) throw Error("請先填天天樂號碼上限");
+  return groups.map(group => {
+    const expanded = group.flatMap(({value,tail}) => {
+      if (!tail) {
+        if (value < 1 || value > max) throw Error("號碼超出此彩種範圍");
+        return [value];
+      }
+      if (value < 0 || value > 9) throw Error("尾數須為 0–9");
+      if (!$("tails").value) throw Error("尾數算法待確認");
+      if ($("tails").value === "group") return ["t"+value];
+      return Array.from({length:max},(_,i)=>i+1).filter(n=>n%10 === value);
+    });
+    if (new Set(expanded).size !== expanded.length) throw Error("同柱出現重複號碼");
+    if (!expanded.length) throw Error("這一柱沒有可用號碼");
+    return expanded;
+  });
+}
+function combinations(groups,k) {
+  // Cap enumeration to protect the page against accidentally huge orders.
+  let count = 0;
+  const sizes = choose(groups.map(group => group.length), Math.min(k,groups.length));
+  if (groups.length > 1 && groups.length < k) throw Error("立柱數少於指定星別");
+  if (groups.length === 1) {
+    count = k > groups[0].length ? 0 : Array.from({length:k},(_,i)=>i).reduce((acc,i)=>acc*(groups[0].length-i)/(i+1),1);
+  } else {
+    count = sizes.reduce((sum,list)=>sum+list.reduce((a,b)=>a*b,1),0);
+  }
+  if (!count) throw Error("號碼數少於指定星別");
+  if (count > 200000) throw Error("組合超過 20 萬，請拆單計算");
+  if (groups.length === 1) return choose(groups[0],k);
+  const unique = new Map();
+  for (const subset of choose(groups,k)) {
+    const products = subset.reduce((acc,next)=>acc.flatMap(list=>next.map(n=>[...list,n])),[[]]);
+    for (const match of products) {
+      if (new Set(match).size !== k) throw Error("跨柱組合出現同號，請確認此單算法");
+      const key = [...match].sort().join(",");
+      if (unique.has(key)) throw Error("跨柱產生重複組合，請確認此單算法");
+      unique.set(key,match);
+    }
+  }
+  return [...unique.values()];
+}
+function hits(combo,draw) {
+  if (!draw) return false;
+  const match = (i,used) => i === combo.length || draw.some(n => !used.includes(n) &&
+    (typeof combo[i] === "number" ? n === combo[i] : n%10 === Number(combo[i].slice(1))) &&
+    match(i+1,[...used,n]));
+  return match(0,[]);
+}
+function calcLine(row,type,weight,draw) {
+  if (!Number.isFinite(weight) || weight <= 0) throw Error("每組數量須大於零");
+  const combos = combinations(expandGroups(row.groups,row.game),type===5?1:type);
+  const win = draw ? combos.filter(combo=>hits(combo,draw)) : [];
+  return {groups:combos.length,units:rounded((type===5?1:combos.length)*weight),win,winUnits:rounded(win.length*weight)};
+}
+function renderEntries() {
+  const out=$("entries"); out.replaceChildren();
+  const entries=[...state.entries.entries()].filter(([,entry])=>entry.date===$("day").value);
+  $("entryCount").textContent="（"+entries.filter(([,entry])=>!entry.cancelled).length+" 筆）";
+  if (!entries.length) out.append(node("p","還沒有牌單。加入後會列在這裡。","hint"));
+  for (const [index,entry] of entries) {
+    const box=node("div",undefined,"entry");
+    box.append(node("strong",(entry.cancelled ? "已取消｜" : "")+entry.customer+" · "+entry.date));
+    const details=node("details"); details.append(node("summary","原始文字"),node("pre",entry.raw)); box.append(details);
+    const action=node("button",entry.cancelled ? "恢復此單" : "取消此單","secondary");
+    action.addEventListener("click",()=>{ entry.cancelled=!entry.cancelled; save(); render(); });
+    const edit=node("button","修改此單","secondary");
+    edit.addEventListener("click",()=>{
+      $("orders").value=entry.raw; $("customer").value=entry.customer;
+      $("defaultGame").value=entry.defaultGame; $("paperNotation").checked=!!entry.paperNotation; $("day").value=entry.date; $("day").dispatchEvent(new Event("change"));
+      editing=index; $("add").textContent="儲存修改";
+      openOrderView("paste"); $("cancelEdit").hidden=false; $("orders").focus(); save(); render();
+    });
+    box.append(action,edit); out.append(box);
+  }
+}
+function summaryTable(headers,rows) {
+  const table=node("table"), head=node("thead"), header=node("tr"), body=node("tbody"), wrap=node("div",undefined,"scroll");
+  for (const label of headers) header.append(node("th",label));
+  head.append(header); table.append(head);
+  for (const row of rows) {
+    const tr=node("tr");
+    for (const cell of row) {
+      const td=node("td");
+      if (typeof cell === "string") td.textContent=cell; else td.append(cell);
+      tr.append(td);
+    }
+    body.append(tr);
+  }
+  table.append(body); wrap.append(table); return wrap;
+}
+const displayNumber=value=>typeof value==="number"?String(value).padStart(2,"0"):value.slice(1)+"尾";
+function comparisonCard(customer,row,draw) {
+  const card=node("article",undefined,"compare-card");
+  card.append(node("h4",customer+"｜"+games[row.game]));
+  const grid=node("dl",undefined,"compare-grid");
+  const chosen=node("div"), opened=node("div"), order=node("dd");
+  for (const [groupIndex,group] of row.groups.entries()) {
+    if (groupIndex) order.append(" ｜ ");
+    if (row.groups.length>1) order.append("第 "+(groupIndex+1)+" 柱 ");
+    for (const [index,token] of group.entries()) {
+      if (index) order.append("、");
+      const matched=draw.values?.some(n=>token.tail?n%10===token.value:n===token.value);
+      const text=displayNumber(token.tail?"t"+token.value:token.value);
+      order.append(matched?node("mark",text,"hit-number"):text);
+    }
+  }
+  chosen.append(node("dt","客人下的號碼"),order);
+  opened.append(node("dt","當日開獎號碼"),node("dd",draw.values?draw.values.map(displayNumber).join("、"):draw.issue));
+  grid.append(chosen,opened);
+  const stars=node("ul",undefined,"compare-lines");
+  card.append(grid,stars);
+  return {card,stars};
+}
+function comparisonLine(stars,type,result,draw,prize) {
+  const line=node("li");
+  line.append(node("strong",types[type]),"｜下單 "+fmt(result.units)+" "+unitName(type)+"｜");
+  if (!draw.values) line.append("待開獎");
+  else if (!result.win.length) line.append("未中");
+  else {
+    line.append(node("span",result.win.map(group=>group.map(displayNumber).join("–")).join("、"),"winning-combos"));
+    line.append("（"+result.win.length+(type===5||type===1?" 號":" 組")+"，命中 "+fmt(result.winUnits)+" "+unitName(type)+"）");
+    line.append(prize===null?"｜待填賠率":"｜中獎 "+fmt(rounded(result.winUnits*prize))+" 元");
+  }
+  stars.append(line);
+}
+function renderDailyUnits(unitsByType,pendingTypes) {
+  const out=$("dailyUnits"); out.replaceChildren();
+  for (const type of [2,3]) {
+    const item=node("div");
+    item.append(node("span",types[type]+"總支數"),node("strong",fmt(unitsByType[type]??0)+" 支"));
+    if (pendingTypes.has(type)) item.append(node("small","上方為已算支數，部分牌單待核對。"));
+    out.append(item);
+  }
+}
+function renderResults() {
+  const out=$("results");
+  out.replaceChildren();
+  const selected = state.entries.filter(entry=>entry.date===$("day").value && !entry.cancelled);
+  const issues=new Set(), totals=new Map(), customers=new Map(), comparisons=[], pendingTypes=new Set();
+  const draws=Object.fromEntries(gameKeys.map(game=>[game,drawFor(game)]));
+  let partialCost=false, partialPrize=false;
+  for (const entry of selected) {
+    const person = customers.get(entry.customer) || {prize:0,partial:false};
+    customers.set(entry.customer,person);
+    const {rows,errors}=parseOrders(entry.raw,entry.defaultGame,entry.paperNotation);
+    for (const error of errors) issues.add(entry.customer+"｜"+error);
+    if (errors.length) { partialCost=true; partialPrize=true; person.partial=true; pendingTypes.add(2); pendingTypes.add(3); }
+    for (const row of rows) {
+      const draw=draws[row.game];
+      const {card,stars}=comparisonCard(entry.customer,row,draw);
+      comparisons.push(card);
+      for (const [kind,weight] of Object.entries(row.values)) {
+        const type=Number(kind), key=row.game+"-"+type;
+        try {
+          const result=calcLine(row,type,weight,draw.values);
+          const agg=totals.get(key) || {type,game:row.game,units:0,winUnits:0};
+          agg.units=rounded(agg.units + result.units);
+          agg.winUnits=rounded(agg.winUnits + result.winUnits);
+          totals.set(key,agg);
+          const prize=perHitPrize(key), cost=nonnegative("cost-"+key);
+          if (cost===null) { issues.add(games[row.game]+" "+types[type]+" 待填成本"); partialCost=true; }
+          if (!draw.values) { issues.add(games[row.game]+"｜"+draw.issue); partialPrize=true; person.partial=true; }
+          if (result.winUnits && prize===null) { issues.add(games[row.game]+" "+types[type]+" 待填賠率"); partialPrize=true; person.partial=true; }
+          if (prize!==null) person.prize=rounded(person.prize+result.winUnits*prize);
+          comparisonLine(stars,type,result,draw,prize);
+        } catch (error) {
+          issues.add(entry.customer+"｜"+row.original+" "+types[type]+"｜"+error.message);
+          stars.append(node("li",types[type]+"｜"+error.message,"issue"));
+          pendingTypes.add(type);
+          partialCost=true; partialPrize=true; person.partial=true;
+        }
+      }
+    }
+  }
+  const costsByType = {};
+  let prizeSum=0;
+  const summary=[], unitsByType={};
+  for (const [key,total] of totals) {
+    const c=nonnegative("cost-"+key), p=perHitPrize(key);
+    const cost=rounded(total.units*(c||0)), prize=rounded(total.winUnits*(p||0));
+    const unit=" "+unitName(total.type);
+    unitsByType[total.type]=rounded((unitsByType[total.type]||0)+total.units);
+    costsByType[total.type]=rounded((costsByType[total.type]||0)+cost);
+    prizeSum=rounded(prizeSum+prize);
+    summary.push([games[total.game],types[total.type],fmt(total.units)+unit,c===null?"待填":fmt(cost),
+      draws[total.game].values?fmt(total.winUnits)+unit:"待開獎",
+      !draws[total.game].values || (total.winUnits && p===null)?"待核對":fmt(prize)]);
+  }
+  const amounts=Object.values(costsByType);
+  const costSum=$("rounding").value==="total" ? Math.round(rounded(amounts.reduce((a,b)=>a+b,0))) : amounts.reduce((a,b)=>a+Math.round(b),0);
+  const manualCost=nonnegative("manualCost"), manualPrize=nonnegative("manualPrize");
+  const hasOrders=selected.length>0;
+  const cost=manualCost ?? (hasOrders && !partialCost ? costSum : null);
+  const prize=manualPrize ?? (hasOrders && !partialPrize ? rounded(prizeSum) : null);
+  const balance=cost===null || prize===null ? null : rounded(cost-prize);
+  currentDay={cost,prize,balance};
+  renderAccounts();
+  renderDailyUnits(unitsByType,pendingTypes);
+  out.append(node("h3","逐筆對獎｜客人下單與當日開獎","spaced"));
+  if (comparisons.length) out.append(node("p","底色標出與開獎相符的號碼。每個星別下方列出實際中獎的組合。","hint"),...comparisons);
+  else out.append(node("p",hasOrders?"牌單格式待核對，確認後會在這裡顯示對獎結果。":"加入牌單後，這裡會列出每位客人的下單號碼。","hint"));
+  if (issues.size) {
+    const list=node("ul",undefined,"issue");
+    for (const issue of issues) list.append(node("li",issue));
+    out.append(node("h3","待核對", "spaced"),list);
+  }
+  if (summary.length) out.append(node("h3","依彩種與玩法","spaced"),summaryTable(["彩種","玩法","總量","成本（元，取整前）","命中量","中獎（元）"],summary));
+  if (customers.size) out.append(node("h3","依客人","spaced"),summaryTable(["客人","中獎（元）"],[...customers].map(([name,val])=>[name,val.partial?"已算 "+fmt(val.prize)+"，有待核對":fmt(val.prize)])));
+}
+function render() { renderEntries(); renderResults(); renderLedger(); previewOrder(); }
+createRates();
+$("day").value=localDay();
+for (const id of fieldIds) if (Object.hasOwn(state.fields,id) && !(id.startsWith("prize-") && state.fields[id]==="" && !Object.hasOwn(state.fields,id.replace("prize-","base-")))) $(id).value=state.fields[id];
+const dailyFields=["draw539","drawlotto","drawdaily","manualCost","manualPrize"];
+state.daily ??= {};
+for (const id of dailyFields) if (state.daily[$("day").value]?.[id] !== undefined) $(id).value=state.daily[$("day").value][id];
+let currentDay={cost:null,prize:null,balance:null};
+let editing=null, lastDay=$("day").value;
+function resetEdit() {
+  editing=null;
+  $("add").textContent="加入文字牌單";
+  $("cancelEdit").hidden=true;
+}
+$("cancelEdit").addEventListener("click",()=>{
+  resetEdit(); $("orders").value=""; $("message").textContent="已取消修改。";
+});
+for (const id of fieldIds) $(id).addEventListener("change",()=>{
+  const date=$("day").value;
+  if (id==="day" && lastDay!==date) {
+    if (editing!==null) $("orders").value="";
+    resetEdit();
+    for (const field of dailyFields) $(field).value=state.daily[date]?.[field] ?? "";
+    lastDay=date;
+    for (const id of ["accountMessage","ledgerMessage","message"]) $(id).textContent="";
+  }
+  if (dailyFields.includes(id) && date) {
+    state.daily[date] ??= {};
+    state.daily[date][id]=$(id).value;
+  }
+  save(); render();
+});
+$("add").addEventListener("click",()=>{
+  const date=$("day").value, raw=$("orders").value.trim(), defaultGame=$("defaultGame").value;
+  if (!date || !raw) { $("message").textContent="請先填日期和牌單內容。"; return; }
+  const paperNotation=$("paperNotation").checked;
+  const entry={date,raw,defaultGame,paperNotation,customer:$("customer").value.trim()||"未指定客人",cancelled:editing===null?false:state.entries[editing].cancelled};
+  const {rows,errors}=parseOrders(raw,defaultGame,paperNotation);
+  if (editing===null) state.entries.push(entry); else state.entries[editing]=entry;
+  resetEdit(); $("orders").value="";
+  $("message").textContent="已儲存 "+rows.length+" 筆牌單"+(errors.length?"，有 "+errors.length+" 處格式待核對。":"。");
+  save(); render();
+});
+let photoUrls=[];
+$("photos").addEventListener("change",()=>{
+  photoUrls.forEach(url=>URL.revokeObjectURL(url));
+  photoUrls=[];
+  $("photoList").replaceChildren();
+  [...$("photos").files].forEach((file,index)=>{
+    const figure=node("figure",undefined,"photo-thumb");
+    const img=node("img");
+    img.alt="照片 "+(index+1)+" 原圖";
+    img.src=URL.createObjectURL(file);
+    photoUrls.push(img.src);
+    figure.append(img,node("figcaption","照片 "+(index+1)+"｜"+file.name));
+    $("photoList").append(figure);
+  });
+});
+$("exportData").addEventListener("click",()=>{
+  save();
+  const path=URL.createObjectURL(new Blob([JSON.stringify({format:"paidan-settlement",data:state},null,2)],{type:"application/json"}));
+  const link=node("a");
+  link.href=path;
+  link.download="paidan-backup-"+localDay()+".json";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(path),1000);
+  $("backupStatus").textContent="已開始下載備份檔。";
+});
+$("importData").addEventListener("change",async()=>{
+  const file=$("importData").files[0];
+  if (!file) return;
+  try {
+    const wrapper=JSON.parse(await file.text()), data=wrapper.data;
+    if (wrapper.format!=="paidan-settlement"||!Array.isArray(data?.entries)||!data.fields||!data.daily||!data.ledger) throw Error("這個檔案不是有效的牌單備份。");
+    if ((state.entries.length||Object.keys(state.ledger).length||Object.keys(state.daily).length||Object.keys(state.fields).length)
+        && !window.confirm("匯入會取代這個瀏覽器的牌單、流水帳和設定。確定繼續？")) return;
+    localStorage.setItem(storeKey,JSON.stringify(data));
+    location.reload();
+  } catch(error) { $("backupStatus").textContent=error.message; }
+  finally { $("importData").value=""; }
+});
+function openView(view) {
+  for (const button of document.querySelectorAll("nav [data-view]")) {
+    const active=button.dataset.view===view;
+    button.setAttribute("aria-selected",String(active));
+    $("view-"+button.dataset.view).hidden=!active;
+  }
+}
+for (const button of document.querySelectorAll("nav [data-view]")) button.addEventListener("click",()=>openView(button.dataset.view));
+$("toOrders").addEventListener("click",()=>openView("orders"));
+function showRateGame() {
+  for (const game of gameKeys) $("rate-grid-"+game).hidden=game!==$("rateGame").value;
+}
+$("rateGame").addEventListener("change",showRateGame);
+$("saveRates").addEventListener("click",()=>{
+  if (save()) $("settingsMessage").textContent="設定已儲存。";
+  render();
+});
+function countGroups(sizes,k) {
+  const counts=Array(k+1).fill(0);
+  counts[0]=1;
+  for (const size of sizes) for (let i=k;i>=1;i--) counts[i]+=counts[i-1]*size;
+  return counts[k];
+}
+function renderQuick() {
+  const out=$("quickResult"), field=$("quickCounts");
+  const columns=$("quickMode").value==="column";
+  $("quickCountLabel").textContent=columns?"每柱各有幾個號碼":"號碼有幾個";
+  field.placeholder=columns?"例如 3、2、4":"例如 6";
+  out.replaceChildren();
+  if (!field.value.trim()) return;
+  try {
+    const sizes=readNumbers(normal(field.value)), weight=nonnegative("quickWeight");
+    if (!weight) throw Error("請輸入每碰支數");
+    if (sizes.some(n=>n<1||n>99) || (!columns && sizes.length!==1) || (columns && (sizes.length<2||sizes.length>16))) {
+      throw Error(columns?"輸入 2 到 16 柱的號碼數":"請輸入一個號碼數");
+    }
+    const counts=columns?sizes:Array(sizes[0]).fill(1);
+    const rows=[2,3,4].map(k=>{
+      const count=countGroups(counts,k);
+      return [types[k],fmt(count),fmt(rounded(count*weight))];
+    });
+    out.append(summaryTable(["星別","碰數","支數"],rows));
+  } catch (error) { out.append(node("p",error.message,"issue")); }
+}
+for (const id of ["quickMode","quickCounts","quickWeight"]) $(id).addEventListener("input",renderQuick);
+function openOrderView(view) {
+  for (const button of document.querySelectorAll("[data-order-view]")) {
+    const active=button.dataset.orderView===view;
+    button.setAttribute("aria-pressed",String(active));
+    $("order-"+button.dataset.orderView).hidden=!active;
+  }
+}
+for (const button of document.querySelectorAll("[data-order-view]")) button.addEventListener("click",()=>openOrderView(button.dataset.orderView));
+const directHelp={
+  full:"號碼只填一格。例：01、02、03 做二星，有 3 碰。",
+  column:"同一柱的號碼填在同一格。例：第一柱 01、02，第二柱 03、04，二星有 4 碰。",
+  car:"這一筆填一組號碼和整組車數。",
+  single:"填一組號碼。例：01、02 各 0.2 車，車數填 0.2，這筆合計 0.4 車。"
+};
+function carMode(mode) { return mode==="car"||mode==="single"; }
+function showQuickMode() {
+  const mode=$("orderMode").value;
+  $("orderHelp").textContent=directHelp[mode];
+  $("starInputs").hidden=carMode(mode);
+  $("carInput").hidden=!carMode(mode);
+  $("columnGroup").hidden=mode!=="column";
+  $("singleGroup").hidden=mode==="column";
+  $("quantityTitle").textContent=carMode(mode)?"填下單車數":"填下單支數";
+  $("carLabel").textContent=mode==="single"?"每個號碼下幾車":"這一組下幾車";
+  previewOrder();
+}
+function labelColumns() {
+  const columns=[...$("orderColumns").children];
+  for (const [index,row] of columns.entries()) {
+    row.querySelector("span").textContent="第 "+(index+1)+" 柱";
+    const remove=row.querySelector("button");
+    remove.hidden=columns.length<=2;
+    remove.setAttribute("aria-label","移除第 "+(index+1)+" 柱");
+  }
+  $("addColumn").disabled=columns.length>=16;
+}
+function addOrderColumn(focus=false) {
+  const wrap=$("orderColumns");
+  if (wrap.children.length>=16) return;
+  const row=node("div",undefined,"column-field"), label=node("label"), input=node("input");
+  input.placeholder=wrap.children.length===0?"例如 01、02":wrap.children.length===1?"例如 03、04":"輸入這一柱的號碼";
+  input.addEventListener("input",previewOrder);
+  const remove=node("button","移除","secondary");
+  remove.type="button";
+  remove.addEventListener("click",()=>{row.remove();labelColumns();previewOrder();});
+  label.append(node("span"),input);
+  row.append(label,remove); wrap.append(row);
+  labelColumns();
+  if (focus) input.focus();
+}
+function directNumbers(mode) {
+  const raw=mode==="column" ? [...$("orderColumns").querySelectorAll("input")].map(input=>normal(input.value)) : [normal($("quickNumbers").value)];
+  if (raw.every(value=>!value)) return null;
+  if (raw.some(value=>!value)) throw Error("請填完每一柱，或移除用不到的柱。");
+  return {raw:raw.join(" 碰 "),groups:raw.map(groupTokens)};
+}
+function directValues(mode) {
+  const fields=carMode(mode)?[[mode==="car"?5:1,"quickCar"]]:[2,3,4].map(k=>[k,"quickStar"+k]);
+  return fields.filter(([,id])=>$(id).value!==""||$(id).validity.badInput).map(([kind,id])=>{
+    const amount=nonnegative(id);
+    if (!amount) throw Error(types[kind]+"請填大於 0 的數量，沒下可留空。");
+    return [kind,amount];
+  });
+}
+function previewOrder() {
+  const mode=$("orderMode").value, box=$("orderPreview");
+  box.replaceChildren(); box.hidden=true;
+  try {
+    const numbers=directNumbers(mode);
+    if (!numbers) return;
+    const row={groups:numbers.groups,game:$("defaultGame").value};
+    const values=directValues(mode);
+    if (carMode(mode)) {
+      if (!values.length) return;
+      const [type,weight]=values[0], result=calcLine(row,type,weight,null);
+      box.append(node("p",types[type]+"合計 "+fmt(result.units)+" 車"));
+    } else {
+      const expanded=expandGroups(row.groups,row.game);
+      if (mode==="column" && new Set(expanded.flat()).size!==expanded.flat().length) throw Error("不同柱有相同號碼，請確認各柱。");
+      const sizes=mode==="column"?expanded.map(group=>group.length):expanded[0].map(()=>1);
+      const weights=new Map(values);
+      const rows=[2,3,4].map(type=>{
+        const weight=weights.get(type);
+        const count=countGroups(sizes,type);
+        if (weight && !count) throw Error(types[type]+"的號碼或柱數不足。");
+        return [types[type],fmt(count),weight?fmt(count)+" × "+fmt(weight)+" ＝ "+fmt(rounded(count*weight))+" 支":"—"];
+      });
+      box.append(summaryTable(["星別","可組幾碰","這筆合計"],rows));
+    }
+    box.hidden=false;
+  } catch(error) {
+    box.append(node("p",error.message,"issue"));
+    box.hidden=false;
+  }
+}
+$("addColumn").addEventListener("click",()=>addOrderColumn(true));
+$("orderMode").addEventListener("change",showQuickMode);
+$("defaultGame").addEventListener("change",previewOrder);
+for (const id of ["quickNumbers","quickStar2","quickStar3","quickStar4","quickCar"]) $(id).addEventListener("input",previewOrder);
+$("quickAdd").addEventListener("click",()=>{
+  const date=$("day").value, defaultGame=$("defaultGame").value, mode=$("orderMode").value;
+  try {
+    if (!date) throw Error("請先選帳務日期。");
+    const numbers=directNumbers(mode);
+    if (!numbers) throw Error("請先輸入客人的號碼。");
+    let raw=numbers.raw;
+    const values=directValues(mode);
+    if (!values.length) throw Error(carMode(mode)?"請填車數。":"請在有下單的星別填上支數。");
+    for(const [type,weight] of values) calcLine({groups:numbers.groups,game:defaultGame},type,weight,null);
+    if (mode==="car") raw+=" 全車"+values[0][1];
+    else if (mode==="single") raw+=" 各"+values[0][1]+"車";
+    else raw+="\n"+values.map(([k,value])=>types[k]+"×"+value).join("\n");
+    const parsed=parseOrders(raw,defaultGame);
+    if (parsed.errors.length || parsed.rows.length!==1) throw Error("請確認號碼與玩法格式。");
+    state.entries.push({date,raw,defaultGame,customer:$("customer").value.trim()||"未指定客人",cancelled:false});
+    if (mode==="column") for (const input of $("orderColumns").querySelectorAll("input")) input.value="";
+    else $("quickNumbers").value="";
+    for (const id of ["quickStar2","quickStar3","quickStar4","quickCar"]) $(id).value="";
+    if (save()) $("message").textContent="已加入 "+date+" 的 "+games[defaultGame]+"牌單。";
+    render();
+    if (mode==="column") $("orderColumns").querySelector("input").focus();
+    else $("quickNumbers").focus();
+  } catch(error) { $("message").textContent=error.message; }
+});
+function ledgerRows() {
+  let balance=0;
+  const rows=[];
+  for (const [date,entry] of Object.entries(state.ledger).sort(([left],[right])=>left.localeCompare(right))) {
+    const net=money(entry.cost-entry.prize), before=balance;
+    balance=money(balance+net);
+    const available=balance;
+    const writeoffs=entry.writeoffs||[];
+    let invalid=false;
+    for (const record of writeoffs) {
+      if (balance<threshold || record.amount>balance) invalid=true;
+      balance=money(balance-record.amount);
+    }
+    const off=money(available-balance);
+    rows.push({date,entry,before,net,available,off,after:balance,invalid});
+  }
+  return rows;
+}
+const money = value => Math.round(rounded(value)*100)/100;
+const moneyLabel = value => value===null?"待核對":fmt(value)+" 元";
+function stat(cards,title,value,featured=false) {
+  const box=node("div",undefined,featured?"heroStat":"");
+  box.append(node("span",title),node("strong",moneyLabel(value),value<0?"bad":""));
+  cards.append(box);
+}
+function renderAccounts() {
+  const panel=$("accountCards"); panel.replaceChildren();
+  const date=$("day").value;
+  const prior=ledgerRows().filter(row=>row.date<date).at(-1);
+  const posted=state.ledger[date];
+  const before=prior?.after??0;
+  const recordedOff=posted?.writeoffs?.reduce((sum,row)=>sum+row.amount,0)??0;
+  stat(panel,"總成本",currentDay.cost);
+  stat(panel,"中獎總額",currentDay.prize);
+  stat(panel,"本日盈虧",currentDay.balance);
+  stat(panel,"前期結餘",before);
+  stat(panel,"銷帳後累計淨利",currentDay.balance===null?null:money(before+currentDay.balance-recordedOff),true);
+  const note=$("recordedNet");
+  note.hidden=!posted||currentDay.cost===posted.cost&&currentDay.prize===posted.prize;
+  if (posted) note.textContent="流水帳已存成本 "+fmt(posted.cost)+" 元、中獎 "+fmt(posted.prize)+" 元。上方試算有變動時，按「更新本日結算」才會改帳。";
+  $("postDay").textContent=posted?"更新本日結算":"儲存本日結算";
+  $("postDay").disabled=!date||currentDay.balance===null;
+}
+function renderLedger() {
+  const out=$("ledger"); out.replaceChildren();
+  const rows=ledgerRows();
+  const selected=rows.find(row=>row.date===$("day").value);
+  $("writeOff").disabled=!selected||selected.after<threshold;
+  if (!rows.length) { out.append(node("p","儲存第一筆日結後，流水帳會從該日開始累計。","hint")); return; }
+  if (selected) out.append(node("p",selected.after>=threshold?"選定日期可銷帳，結餘 "+fmt(selected.after)+" 元。":"選定日期距銷帳門檻還差 "+fmt(money(threshold-selected.after))+" 元。","note"));
+  const formatted=rows.map(row=>{
+    const pick=node("button",row.date,"secondary");
+    pick.addEventListener("click",()=>{ $("day").value=row.date; $("day").dispatchEvent(new Event("change")); openView("today"); });
+    const notes=(row.entry.writeoffs||[]).map(event=>event.note).filter(Boolean).join("／");
+    return [pick,fmt(row.before),fmt(row.entry.cost),fmt(row.entry.prize),fmt(row.net),fmt(row.off)+(notes?" · "+notes:""),fmt(row.after),row.after>=threshold?"可銷帳":"累計中"];
+  });
+  const drafts=[...new Set(state.entries.filter(entry=>!entry.cancelled&&!state.ledger[entry.date]).map(entry=>entry.date))].sort();
+  if (drafts.length) out.append(node("p","尚未儲存日結："+drafts.join("、"),"hint"));
+  out.append(summaryTable(["日期","前期結餘","成本","中獎","本日盈虧","銷帳","累計結餘","狀態"],formatted));
+}
+$("postDay").addEventListener("click",()=>{
+  const date=$("day").value;
+  if (!date || currentDay.balance===null) return;
+  const previous=state.ledger[date];
+  state.ledger[date]={cost:money(currentDay.cost),prize:money(currentDay.prize),writeoffs:previous?.writeoffs??[]};
+  if (ledgerRows().some(row=>row.invalid)) {
+    if(previous) state.ledger[date]=previous; else delete state.ledger[date];
+    $("accountMessage").textContent="這次更正會讓一筆已登記的銷帳低於門檻或超過當時結餘，請先核對流水帳。";
+    return;
+  }
+  if (save()) $("accountMessage").textContent="已存入流水帳。";
+  render();
+});
+$("writeOff").addEventListener("click",()=>{
+  const row=ledgerRows().find(item=>item.date===$("day").value), amount=nonnegative("writeAmount");
+  const status=$("ledgerMessage");
+  if (!row) { status.textContent="請先儲存選定日期的結算。"; return; }
+  if (row.after<threshold) { status.textContent="選定日期的累計淨利尚未達 200,000 元。"; return; }
+  if (!amount || amount>row.after) { status.textContent="請填入大於零、且未超過累計結餘的金額。"; return; }
+  row.entry.writeoffs??=[];
+  row.entry.writeoffs.push({amount:money(amount),note:$("writeNote").value.trim()});
+  if (ledgerRows().some(item=>item.invalid)) {
+    row.entry.writeoffs.pop();
+    status.textContent="這次銷帳會影響已登記的後續銷帳，請核對日期與金額。";
+    return;
+  }
+  if (save()) status.textContent="已登記銷帳，餘額繼續結轉。";
+  $("writeNote").value="";
+  render();
+});
+showRateGame();
+addOrderColumn();
+addOrderColumn();
+showQuickMode();
+renderQuick();
+render();
+</script>
+</body></html>
