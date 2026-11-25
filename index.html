@@ -62,8 +62,22 @@ nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{m
 .book-settings output{overflow-wrap:anywhere}
 .book-settings details{margin-top:8px}
 #cloudApp[inert]{opacity:.78}
-#memberList li{margin:5px 0}
-#memberList button{margin-left:8px}
+.permissions-heading{display:flex;flex-wrap:wrap;align-items:start;justify-content:space-between;gap:12px;margin-bottom:18px}
+.permissions-heading h2{padding:0;border:0;margin-bottom:4px}
+.permissions-heading p{margin:0}
+.permissions-table{border:1px solid var(--line);border-radius:12px}
+.permissions-table th{background:#edf2fa;color:#263e67}
+.permissions-table td,.permissions-table th{vertical-align:middle;padding:12px 14px}
+.permissions-table tr:last-child td{border-bottom:0}
+.permissions-table button{min-height:42px;font-size:16px;white-space:nowrap}
+@media(max-width:550px){
+  .permissions-table td,.permissions-table th{min-width:74px;padding:9px 10px;font-size:16px}
+  .permissions-table td:nth-child(2){overflow-wrap:anywhere;min-width:155px}
+}
+#accountDialog{width:min(calc(100% - 24px),490px);max-height:calc(100% - 24px);overflow:auto;padding:22px;border:1px solid var(--line);border-radius:16px;color:var(--ink);background:var(--paper)}
+#accountDialog::backdrop{background:#15244191}
+#accountDialog fieldset{margin:0;padding:0;border:0;min-width:0}
+#accountDialog output:empty,#accountPermissions output:empty{display:none}
 @media(max-width:550px){.header-account{grid-column:2;gap:8px}.header-account button{padding-inline:10px;font-size:16px}}
 #loginPanel{
   display:grid;place-items:center;
@@ -157,11 +171,6 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
       <label>目前帳本<select id="workspace"></select></label>
       <div class="actions"><button id="refreshCloud" type="button" class="secondary">同步資料</button></div>
     </div>
-    <details id="identityTools"><summary>我的 User ID</summary>
-      <label>加入共用帳本用的 User ID<input id="myUserId" readonly></label>
-      <button id="copyUserId" type="button" class="secondary">複製我的 User ID</button>
-      <output id="copyUserMessage" aria-live="polite"></output>
-    </details>
     <button id="exportLegacy" type="button" class="secondary" hidden>下載這台裝置的舊版備份</button>
     <output id="cloudMessage" aria-live="polite"></output>
   </section>
@@ -251,6 +260,22 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 </section></div>
 <div id="view-rates" hidden>
 <div id="bookSettingsSlot"></div>
+<section class="panel" id="accountPermissions" hidden aria-labelledby="accountPermissionsTitle">
+  <div class="permissions-heading">
+    <div>
+      <h2 id="accountPermissionsTitle">帳號權限</h2>
+      <p class="hint">用 Google Email 授權。對方可直接登入這本帳，系統不會自動寄送邀請信。</p>
+    </div>
+    <button type="button" id="newAuthorizedAccount">新增授權帳號</button>
+  </div>
+  <div class="scroll permissions-table">
+    <table>
+      <thead><tr><th scope="col">姓名</th><th scope="col">Google Email</th><th scope="col">角色</th><th scope="col">狀態</th><th scope="col">操作</th></tr></thead>
+      <tbody id="authorizedAccounts"></tbody>
+    </table>
+  </div>
+  <output id="permissionMessage" aria-live="polite"></output>
+</section>
 <section class="panel"><h2>後台設定</h2>
 <label>要設定的彩種<select id="rateGame"></select></label>
 <p class="hint">成本用來算當日收款。賠付基數 × 賠率 × 命中支數／車數，算出中獎金額。全車會把同一筆的命中號數乘進去。</p>
@@ -262,18 +287,29 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 </div></details>
 <div class="actions"><button id="saveRates">儲存設定</button></div>
 <output id="settingsMessage" aria-live="polite"></output>
-<div class="order-step" id="membershipPanel" hidden><h3>共用成員</h3>
-<p class="hint">請先授權成員的 Google Email。成員登入後，可從「後台設定 → 共用帳本 → 我的 User ID」複製 ID，再貼到下方加入這本帳。</p>
-<label>成員 User ID<input id="memberId" placeholder="貼上成員的 User ID"></label>
-<button id="addMember" type="button">加入成員</button>
-<output id="memberMessage" aria-live="polite"></output><ul id="memberList"></ul>
-</div>
 <div class="order-step"><h3>資料備份</h3>
 <button id="exportData" type="button" class="secondary">匯出目前帳本備份</button>
 <output id="backupStatus" aria-live="polite"></output></div>
 </section></div>
 </div>
 </main>
+<dialog id="accountDialog" aria-labelledby="accountDialogTitle">
+  <form id="accountForm">
+    <h2 id="accountDialogTitle">新增授權帳號</h2>
+    <fieldset id="accountFields">
+      <label>姓名<input id="authorizedName" maxlength="80" required autofocus></label>
+      <label>Google Email<input id="authorizedEmail" type="email" maxlength="254" autocomplete="off" placeholder="name@gmail.com" required></label>
+      <label>角色<select id="authorizedRole"><option value="staff">帳務人員</option><option value="admin">管理員</option></select></label>
+      <p class="hint">管理員可新增、編輯及停用此帳本的授權帳號。</p>
+      <label>狀態<select id="authorizedState"><option value="enabled">啟用</option><option value="disabled">停用</option></select></label>
+      <div class="actions">
+        <button type="submit">儲存授權</button>
+        <button type="button" id="cancelAuthorizedAccount" class="secondary">取消</button>
+      </div>
+    </fieldset>
+    <output id="accountFormMessage" aria-live="polite"></output>
+  </form>
+</dialog>
 <script id="supabase-sdk">
 /* Bundled Supabase JS 2.119.2 and dependency notices
 auth-js
@@ -1375,12 +1411,15 @@ async function runWrite(statusId,operation) {
 }
 function clearBookDrafts() {
   changedDayInputs.clear(); changedSettings.clear();
+  $("accountDialog").close();
+  $("accountPermissions").hidden=true;
+  $("authorizedAccounts").replaceChildren();
   resetEdit();
   for (const id of ["orders","customer","quickNumbers","quickStar2","quickStar3","quickStar4","quickCar","writeNote"]) $(id).value="";
   for (const field of $("orderColumns").querySelectorAll("input")) field.value="";
   $("photos").value="";
   $("photos").dispatchEvent(new Event("change"));
-  for (const id of ["message","accountMessage","ledgerMessage","settingsMessage","dayInputsMessage","memberMessage","backupStatus"]) $(id).textContent="";
+  for (const id of ["message","accountMessage","ledgerMessage","settingsMessage","dayInputsMessage","permissionMessage","backupStatus"]) $(id).textContent="";
 }
 function workspaceName(row) { return row.is_manager?"我管理的帳本":"共用帳本 "+row.workspace_id.slice(0,8); }
 function activeIsManager() { return listedWorkspaces.some(row=>row.workspace_id===activeWorkspace&&row.is_manager); }
@@ -1401,10 +1440,9 @@ async function activateWorkspace(workspace) {
     if (!await loadBook(workspace)) return;
     ready=true;
     $("cloudApp").hidden=false; $("datePicker").hidden=false;
-    $("membershipPanel").hidden=!activeIsManager();
     try { localStorage.setItem("paidan-workspace-"+currentUser.id,workspace); } catch {}
     syncStamp();
-    await loadMembers(workspace);
+    await loadAuthorizedAccounts(workspace);
   } catch(error) {
     if (revision===authRevision) $("cloudMessage").textContent=error.message;
   } finally {
@@ -1431,7 +1469,10 @@ async function refreshCloud(showProgress=false) {
       }
       return;
     }
-    if (await loadBook(workspace)) syncStamp();
+    if (await loadBook(workspace)) {
+      syncStamp();
+      await loadAuthorizedAccounts(workspace);
+    }
   } catch(error) {
     if (authRevision!==revision) return;
     if (error.message===deniedEmailCode) await denyAccount();
@@ -1474,7 +1515,6 @@ async function setSession(session) {
   $("cloudApp").hidden=true; $("datePicker").hidden=true;
   $("appHeader").hidden=true; $("loginPanel").hidden=false;
   $("headerMessage").textContent="";
-  $("identityTools").open=false;
   if (user) {
     $("loginGoogle").disabled=true;
     $("loginMessage").textContent="正在確認帳號權限…";
@@ -1482,8 +1522,6 @@ async function setSession(session) {
     $("loginGoogle").disabled=!db||!oauthOnWeb;
   }
   state=emptyBook(); clearBookDrafts(); render();
-  $("myUserId").value=user?.id??"";
-  $("copyUserMessage").textContent="";
   if (!user) { setBusy(false); return; }
   $("workspace").replaceChildren();
   setBusy(true);
@@ -1561,17 +1599,6 @@ $("loginGoogle").addEventListener("click",async()=>{
       ? deniedEmailMessage
       : /provider|not enabled/i.test(error.message)?"Google 登入目前無法使用。請聯絡帳本管理者。":error.message;
   } finally { $("loginGoogle").disabled=false; }
-});
-$("copyUserId").addEventListener("click",async()=>{
-  const field=$("myUserId");
-  if (!field.value) return;
-  try {
-    await navigator.clipboard.writeText(field.value);
-    $("copyUserMessage").textContent="已複製 User ID。";
-  } catch {
-    field.focus(); field.select();
-    $("copyUserMessage").textContent="已選取 User ID，請按 Ctrl+C 或使用複製。";
-  }
 });
 $("signOut").addEventListener("click",async()=>{
   if (busy||!db) return;
@@ -1683,38 +1710,107 @@ async function saveCloudSettings(workspace) {
 function settlementInput(date) {
   return JSON.stringify([state.fields,state.daily[date]??{},state.entries.filter(entry=>entry.date===date),state.ledger[date]??null]);
 }
-async function loadMembers(workspace) {
-  if (!activeIsManager()) return;
-  const list=$("memberList");
-  try {
-    const members=await response(db.from("paidan_members").select("user_id").eq("workspace_id",workspace).order("added_at"));
-    if (activeWorkspace!==workspace) return;
-    list.replaceChildren();
-    for (const row of members) {
-      const li=node("li",row.user_id);
-      const remove=node("button","移除","secondary");
-      remove.addEventListener("click",()=>{
-        if (!window.confirm("確定要移除此成員的帳本存取權？")) return;
-        void runWrite("memberMessage",async active=>{
-          await response(db.rpc("paidan_remove_member",{p_user_id:row.user_id}));
-          $("memberMessage").textContent="已移除成員。";
-          await loadMembers(active);
-        });
-      });
-      li.append(remove); list.append(li);
-    }
-    if (!members.length) list.append(node("li","目前尚未加入成員。","hint"));
-  } catch(error) { $("memberMessage").textContent=error.message; }
+let editingAccountEmail=null;
+function openAccountDialog(account) {
+  editingAccountEmail=account?.email??null;
+  $("accountForm").reset();
+  $("accountFormMessage").textContent="";
+  $("accountDialogTitle").textContent=account?"編輯授權帳號":"新增授權帳號";
+  $("authorizedName").value=account?.display_name??"";
+  $("authorizedEmail").value=account?.email??"";
+  $("authorizedRole").value=account?.account_role??"staff";
+  $("authorizedState").value=account?.enabled===false?"disabled":"enabled";
+  $("accountDialog").showModal();
 }
-$("addMember").addEventListener("click",()=>runWrite("memberMessage",async workspace=>{
-  if (!activeIsManager()) throw Error("只有管理者可加入成員。");
-  const id=$("memberId").value.trim();
-  if (!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/iu.test(id)) throw Error("請貼上完整的成員 User ID。");
-  await response(db.rpc("paidan_add_member",{p_user_id:id}));
-  $("memberId").value="";
-  $("memberMessage").textContent="已加入共用成員。";
-  await loadMembers(workspace);
-}));
+function renderAuthorizedAccounts(accounts) {
+  const body=$("authorizedAccounts");
+  body.replaceChildren();
+  if (!accounts.length) {
+    const cell=node("td","目前尚無授權帳號。","hint");
+    cell.colSpan=5;
+    const row=node("tr");
+    row.append(cell);
+    body.append(row);
+    return;
+  }
+  for (const account of accounts) {
+    const row=node("tr");
+    row.append(
+      node("td",account.display_name||"—"),
+      node("td",account.email),
+      node("td",account.account_role==="admin"?"管理員":"帳務人員"),
+      node("td",account.enabled?"啟用":"停用",account.enabled?"good":"hint")
+    );
+    const action=node("td");
+    if (account.editable) {
+      const edit=node("button",account.enabled?"編輯／停用":"編輯／啟用","secondary");
+      edit.type="button";
+      edit.setAttribute("aria-label",edit.textContent+" "+account.email);
+      edit.addEventListener("click",()=>openAccountDialog(account));
+      action.append(edit);
+    } else {
+      action.append(node("span",account.email===currentUser?.email?.toLowerCase()?"目前帳號":"初始管理員","hint"));
+    }
+    row.append(action);
+    body.append(row);
+  }
+}
+async function loadAuthorizedAccounts(workspace) {
+  const revision=authRevision;
+  const panel=$("accountPermissions");
+  if (!activeIsManager()) {
+    panel.hidden=true;
+    $("accountDialog").close();
+    return;
+  }
+  try {
+    const accounts=await response(db.rpc("paidan_list_accounts",{p_workspace_id:workspace}));
+    if (revision!==authRevision||workspace!==activeWorkspace) return;
+    panel.hidden=accounts===null;
+    $("newAuthorizedAccount").disabled=accounts===null;
+    if (accounts===null) $("accountDialog").close();
+    else renderAuthorizedAccounts(accounts);
+  } catch (error) {
+    if (revision!==authRevision||workspace!==activeWorkspace) return;
+    $("permissionMessage").textContent=error.message;
+    $("authorizedAccounts").replaceChildren();
+    $("newAuthorizedAccount").disabled=true;
+    panel.hidden=false;
+  }
+}
+$("newAuthorizedAccount").addEventListener("click",()=>openAccountDialog(null));
+$("cancelAuthorizedAccount").addEventListener("click",()=>$("accountDialog").close());
+$("accountDialog").addEventListener("cancel",event=>{
+  if ($("accountFields").disabled) event.preventDefault();
+});
+$("accountForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if ($("accountFields").disabled) return;
+  const payload={
+    p_original_email:editingAccountEmail,
+    p_email:$("authorizedEmail").value.trim(),
+    p_display_name:$("authorizedName").value.trim(),
+    p_role:$("authorizedRole").value,
+    p_enabled:$("authorizedState").value==="enabled"
+  };
+  if (!payload.p_display_name) {
+    $("accountFormMessage").textContent="請輸入姓名。";
+    return;
+  }
+  $("accountFields").disabled=true;
+  try {
+    const saved=await runWrite("accountFormMessage",async workspace=>{
+      await response(db.rpc("paidan_save_account",{p_workspace_id:workspace,...payload}));
+    });
+    if (saved) {
+      $("accountDialog").close();
+      $("permissionMessage").textContent=payload.p_enabled?"已儲存帳號授權。":"已停用帳號授權。";
+      await loadAuthorizedAccounts(activeWorkspace);
+    }
+  } finally {
+    $("accountFields").disabled=false;
+  }
+});
 
 showRateGame();
 addOrderColumn();
