@@ -50,25 +50,43 @@ nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{m
 }
 
 .cloud-toolbar{background:#eef3fb}.cloud-toolbar .actions{margin-top:0}.cloud-toolbar select{min-width:0}.cloud-toolbar p{margin:4px 0 0}.cloud-toolbar output:empty{display:none}.cloud-toolbar output{overflow-wrap:anywhere}#cloudApp[inert]{opacity:.78}#memberList li{margin:5px 0}#memberList button{margin-left:8px}.cloud-toolbar .grid{align-items:end}
+
+.google-login{background:#fff;color:#24395d;border:2px solid #224782;padding:10px 20px;font-size:22px}
+.google-login:hover:not(:disabled){background:#edf3ff}.login-details{margin-top:18px}.config-value{overflow-wrap:anywhere}
+#loginPanel button{margin-bottom:4px}#cloudToolbar .identity-tools{margin-top:6px}
 </style>
 </head>
 <body><main>
 <header><div class="grid"><h1>牌單日帳</h1><label id="datePicker" hidden>帳務日期<input type="date" id="day"></label></div></header>
 <section class="panel" id="loginPanel">
 <h2>登入共用帳本</h2>
+<button id="loginGoogle" class="google-login" type="button">使用 Google 登入</button>
+<p id="googleLocalHint" class="hint" hidden>要使用 Google 登入，請從帳本的 HTTPS 網址，或透過本機網頁伺服器開啟這頁。</p>
+<output id="loginMessage" aria-live="polite"></output>
+<details class="login-details"><summary>使用 Email 和密碼登入</summary>
 <form id="loginForm">
 <div class="grid"><label>Email<input id="loginEmail" type="email" autocomplete="username" required></label>
 <label>密碼<input id="loginPassword" type="password" autocomplete="current-password" required></label></div>
 <button id="loginButton" type="submit">登入</button>
 </form>
-<output id="loginMessage" aria-live="polite"></output>
-<p class="hint">使用管理者已建立並加入帳本的登入帳號。</p>
+</details>
+<details class="login-details"><summary>管理者設定 Google 登入</summary>
+<p class="hint">在 Google Cloud 的 OAuth 網頁用戶端填入 Supabase 回呼網址，再把 Client ID 和 Client Secret 存到 Supabase 的 Google Provider。</p>
+<label>Google Cloud 的 Supabase 回呼網址<input id="providerCallback" class="config-value" readonly></label>
+<label>Supabase 的帳本 Redirect URL<input id="appRedirect" class="config-value" readonly></label>
+<p id="oauthSetupLocal" class="hint" hidden>如果正在用瀏覽器直接開這個 HTML，可在檔案所在資料夾以終端機執行 <code>py -m http.server 8765 --bind 127.0.0.1</code>，再開啟上方本機網址。此步驟需要 Python。</p>
+</details>
 <button id="exportLegacy" type="button" class="secondary" hidden>下載這台裝置的舊版備份</button>
 </section>
 <section class="panel cloud-toolbar" id="cloudToolbar" hidden>
 <div class="grid"><label>目前帳本<select id="workspace"></select></label>
 <div class="actions"><button id="refreshCloud" type="button" class="secondary">同步資料</button><button id="signOut" type="button" class="secondary">登出</button></div></div>
-<p id="accountIdentity" class="hint"></p><output id="cloudMessage" aria-live="polite"></output>
+<p id="accountIdentity" class="hint"></p>
+<details class="identity-tools"><summary>我的 User ID</summary>
+<label>加入共用帳本用的 User ID<input id="myUserId" readonly></label>
+<button id="copyUserId" type="button" class="secondary">複製我的 User ID</button><output id="copyUserMessage" aria-live="polite"></output>
+</details>
+<output id="cloudMessage" aria-live="polite"></output>
 </section>
 <div id="cloudApp" hidden>
 <nav aria-label="功能選單">
@@ -166,7 +184,7 @@ nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{m
 <div class="actions"><button id="saveRates">儲存設定</button></div>
 <output id="settingsMessage" aria-live="polite"></output>
 <div class="order-step" id="membershipPanel" hidden><h3>共用成員</h3>
-<p class="hint">請先在 Supabase 建立成員帳號。從 Authentication → Users 複製 User ID，再貼到下方。</p>
+<p class="hint">請成員先登入一次，並把畫面上「我的 User ID」提供給你，再貼到下方。</p>
 <label>成員 User ID<input id="memberId" placeholder="貼上成員的 User ID"></label>
 <button id="addMember" type="button">加入成員</button>
 <output id="memberMessage" aria-live="polite"></output><ul id="memberList"></ul>
@@ -422,11 +440,18 @@ try {
   const old=JSON.parse(localStorage.getItem(storeKey)||"null");
   if (old?.entries?.length||Object.keys(old?.ledger??{}).length||Object.keys(old?.daily??{}).length||Object.keys(old?.fields??{}).length) legacyBackup=old;
 } catch {}
-const db=window.supabase?.createClient(
-  "https://wxyoffrlqbvdeytyzvnk.supabase.co",
-  "sb_publishable_TKhkPw-J4BfjZaMRztRHFg_2JIKVXuy",
-  {auth:{detectSessionInUrl:false}}
-);
+const projectUrl="https://wxyoffrlqbvdeytyzvnk.supabase.co";
+const projectKey="sb_publishable_TKhkPw-J4BfjZaMRztRHFg_2JIKVXuy";
+const pageUrl=new URL(window.location.href);
+const onLoopback=["localhost","127.0.0.1","[::1]"].includes(pageUrl.hostname);
+const oauthOnWeb=pageUrl.protocol==="https:"||(pageUrl.protocol==="http:"&&onLoopback);
+const landingUrl=new URL(pageUrl);
+landingUrl.search=""; landingUrl.hash="";
+const localLanding="http://127.0.0.1:8765/paidan-settlement.html";
+const callbackHash=new URLSearchParams(pageUrl.hash.slice(1));
+const oauthQuery=(name)=>pageUrl.searchParams.get(name)??callbackHash.get(name);
+const oauthReturn=Boolean(oauthQuery("code")||oauthQuery("error")||oauthQuery("error_description"));
+const db=window.supabase?.createClient(projectUrl,projectKey,{auth:{flowType:"pkce",detectSessionInUrl:true}});
 let activeWorkspace=null, currentUser=null, listedWorkspaces=[], ready=false, busy=false, refreshing=false, authRevision=0;
 const changedDayInputs=new Set(), changedSettings=new Set();
 const fieldIds = ["day","draw539","drawlotto","drawdaily","tails","rounding","dailyMax","dailyCount","manualPrize","manualCost"];
@@ -1340,6 +1365,8 @@ async function setSession(session) {
   $("cloudApp").hidden=true; $("datePicker").hidden=true;
   $("cloudToolbar").hidden=!user; $("loginPanel").hidden=!!user;
   state=emptyBook(); clearBookDrafts(); render();
+  $("myUserId").value=user?.id??"";
+  $("copyUserMessage").textContent="";
   if (!user) { setBusy(false); return; }
   $("accountIdentity").textContent="已登入 "+(user.email??"");
   $("workspace").replaceChildren();
@@ -1359,16 +1386,60 @@ async function setSession(session) {
     setBusy(false);
   }
 }
+function handleOAuthReturn(session) {
+  if (!oauthReturn) return;
+  const error=oauthQuery("error_description")||oauthQuery("error");
+  if (error && !session) {
+    $("loginMessage").textContent="Google 登入未完成。"+(oauthQuery("error")==="access_denied"?"請重新點選 Google 登入並授權。":"請確認 Supabase 的 Google Provider 和回傳網址設定。");
+  } else if (!session) {
+    $("loginMessage").textContent="Google 登入回傳未完成。請用同一個瀏覽器重新登入。";
+  }
+  const cleaned=new URL(window.location.href);
+  for (const name of ["code","error","error_code","error_description","state"]) cleaned.searchParams.delete(name);
+  if (callbackHash.has("error")||callbackHash.has("code")) cleaned.hash="";
+  try { history.replaceState(null,"",cleaned); } catch {}
+}
 function startCloud() {
-  if (!db) { $("loginMessage").textContent="無法載入登入服務，請確認網路連線後重新開啟。"; return; }
+  $("providerCallback").value=projectUrl+"/auth/v1/callback";
+  $("appRedirect").value=oauthOnWeb?landingUrl.href:localLanding;
+  $("googleLocalHint").hidden=oauthOnWeb;
+  $("oauthSetupLocal").hidden=oauthOnWeb;
+  $("loginGoogle").disabled=!db||!oauthOnWeb;
+  if (!db) { $("loginMessage").textContent="無法載入登入服務，請重新開啟。"; return; }
   db.auth.onAuthStateChange((event,session)=>{
     if (["INITIAL_SESSION","SIGNED_IN","SIGNED_OUT","USER_UPDATED"].includes(event)) {
-      setTimeout(()=>{ void setSession(session); },0);
+      setTimeout(()=>{
+        if (event==="INITIAL_SESSION") handleOAuthReturn(session);
+        void setSession(session);
+      },0);
     }
   });
   window.addEventListener("focus",()=>refreshCloud());
   setInterval(()=>{ if (!document.hidden) refreshCloud(); },45000);
 }
+$("loginGoogle").addEventListener("click",async()=>{
+  if (!db||!oauthOnWeb) return;
+  $("loginGoogle").disabled=true;
+  $("loginMessage").textContent="正在開啟 Google 登入…";
+  try {
+    await response(db.auth.signInWithOAuth({provider:"google",options:{
+      redirectTo:landingUrl.href,queryParams:{prompt:"select_account"}
+    }}));
+  } catch(error) {
+    $("loginMessage").textContent=/provider|not enabled/i.test(error.message)?"Google 登入尚未啟用。請在 Supabase 的 Google Provider 完成設定。":error.message;
+  } finally { $("loginGoogle").disabled=false; }
+});
+$("copyUserId").addEventListener("click",async()=>{
+  const field=$("myUserId");
+  if (!field.value) return;
+  try {
+    await navigator.clipboard.writeText(field.value);
+    $("copyUserMessage").textContent="已複製 User ID。";
+  } catch {
+    field.focus(); field.select();
+    $("copyUserMessage").textContent="已選取 User ID，請按 Ctrl+C 或使用複製。";
+  }
+});
 $("loginForm").addEventListener("submit",async event=>{
   event.preventDefault();
   if (!db) return;
