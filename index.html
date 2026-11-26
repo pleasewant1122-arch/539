@@ -1,8 +1,14 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>牌單日帳</title>
+<meta name="theme-color" content="#192b57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="牌單日帳">
+<link rel="icon" type="image/x-icon" href="./assets/paidan-favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="./assets/paidan-apple-touch-icon.png">
+<link rel="manifest" href="./paidan.webmanifest">
 <style>
 :root{color-scheme:light;--ink:#19243a;--muted:#52617b;--line:#dbe3ed;--blue:#254ec3;--paper:#fff}
 *{box-sizing:border-box}body{margin:0;background:#f0f4fa;color:var(--ink);font:16px/1.5 system-ui,"Microsoft JhengHei",sans-serif}
@@ -16,14 +22,11 @@ label{display:block;font-weight:600}input,select,textarea,button{font:inherit}in
 nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}nav button{flex:1;background:white;color:var(--ink);border-color:var(--line);white-space:nowrap}nav button[aria-selected="true"]{background:var(--blue);color:white;border-color:var(--blue)}
 h2{margin-bottom:14px}.muted-bg{background:#f5f7fb;border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}.actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px}
 .rateGrid{display:grid;grid-template-columns:minmax(62px,1fr) repeat(3,minmax(64px,1fr));gap:6px 9px;align-items:center}.rateGrid input{margin:0}.rateGrid label{font-weight:400}.heroStat{background:#172d62!important;color:#fff}.heroStat .good,.heroStat .bad{color:#fff}.cashHelp{margin:12px 0 0}.note{padding:10px 12px;border-radius:8px;background:#f2f5fb}.ledger-controls{margin-top:12px}.panel details+details{margin-top:12px}.panel details>summary{margin-bottom:8px}
-@media(max-width:500px){main{padding:12px 10px 32px}.panel,header{padding:14px}.grid,.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.wide{grid-column:1/-1}nav button{padding:8px 6px;font-size:14px}.rates{grid-template-columns:1fr}.entry button{margin-right:4px}}
 
 .order-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0 0 16px;padding:4px;background:#edf2fa;border-radius:12px}.order-switch button{padding:8px 4px;border-color:transparent;background:transparent;color:var(--ink)}.order-switch button[aria-pressed="true"]{background:#254ec3;color:white}
 .order-step{border-top:1px solid var(--line);padding-top:14px;margin-top:12px}.order-step h3{margin-bottom:8px}.star-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.order-preview{margin:6px 0 14px;padding:8px 12px;background:#eef3fc;border-radius:10px}.order-preview p{margin:3px 0}.order-preview td:first-child,.order-preview th:first-child{min-width:65px}.order-preview td,.order-preview th{min-width:70px}.column-field{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end}.column-field input{min-width:0}.column-field button{margin-bottom:8px;white-space:nowrap}.order-panel output:empty{display:none}
-@media(max-width:500px){.star-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.order-switch button{font-size:15px}#orderColumns{grid-template-columns:1fr}.order-preview td,.order-preview th{padding:6px}}
 
 .daily-units{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:12px}.compare-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#fafcff}.compare-card h4{margin:0 0 8px}.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin:0}.compare-grid div{min-width:0}.compare-grid dt{font-weight:600;color:var(--muted)}.compare-grid dd{margin:4px 0 0;line-height:1.8;overflow-wrap:anywhere}.compare-lines{margin:8px 0 0;padding:8px 0 0;list-style:none;border-top:1px solid var(--line)}.compare-lines li+li{margin-top:5px}.hit-number{background:#d5f4e6;color:#0c5738;border-radius:4px;padding:1px 3px;font-weight:700}.winning-combos{color:#126248;font-weight:650}
-@media(max-width:550px){nav button{flex:1 1 auto}.compare-grid{grid-template-columns:1fr}}
 
 /* Larger, high-contrast controls and a consistent heading hierarchy. */
 :root{--ink:#1b2637;--muted:#394b68;--line:#bdcbe0;--blue:#1d459d}
@@ -40,16 +43,6 @@ textarea{min-height:150px;padding:10px 12px}label,summary{font-weight:730}summar
 nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{min-width:0}.rateGrid strong{overflow-wrap:anywhere}
 :focus-visible{outline:3px solid #a0470d;outline-offset:3px}.compare-card{padding:16px}.hit-number{padding:2px 5px}
 
-@media(max-width:550px){
-  main{padding:10px 10px 32px}header,.panel{padding:14px}
-  header .grid{grid-template-columns:minmax(0,1fr) auto;gap:8px}
-  #datePicker{grid-column:1/-1;grid-row:2}
-  header input{padding-left:5px;padding-right:5px}
-  nav button{flex:1 1 calc(33% - 6px);padding:6px;font-size:18px}
-  .order-switch button{font-size:18px;padding:6px}textarea{min-height:130px}
-  .rateGrid{grid-template-columns:minmax(47px,1fr) repeat(3,minmax(0,1fr));font-size:16px;gap:5px}
-  .rateGrid input{padding-left:4px;padding-right:4px}
-}
 
 .header-account{grid-column:3;grid-row:1;display:flex;align-items:center;gap:10px;justify-self:end}
 .account-avatar{position:relative;display:grid;place-items:center;width:38px;height:38px;overflow:hidden;border:1px solid #d1def4;border-radius:50%;background:#eef4ff;color:#192b57;font-size:16px;font-weight:750}
@@ -70,15 +63,9 @@ nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{m
 .permissions-table td,.permissions-table th{vertical-align:middle;padding:12px 14px}
 .permissions-table tr:last-child td{border-bottom:0}
 .permissions-table button{min-height:42px;font-size:16px;white-space:nowrap}
-@media(max-width:550px){
-  .permissions-table td,.permissions-table th{min-width:74px;padding:9px 10px;font-size:16px}
-  .permissions-table td:nth-child(2){overflow-wrap:anywhere;min-width:155px}
-}
-#accountDialog{width:min(calc(100% - 24px),490px);max-height:calc(100% - 24px);overflow:auto;padding:22px;border:1px solid var(--line);border-radius:16px;color:var(--ink);background:var(--paper)}
 #accountDialog::backdrop{background:#15244191}
 #accountDialog fieldset{margin:0;padding:0;border:0;min-width:0}
 #accountDialog output:empty,#accountPermissions output:empty{display:none}
-@media(max-width:550px){.header-account{grid-column:2;gap:8px}.header-account button{padding-inline:10px;font-size:16px}}
 #loginPanel{
   display:grid;place-items:center;
   min-height:100vh;min-height:100svh;
@@ -130,6 +117,95 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 .rateEditor{display:grid;gap:12px}.rateEditor fieldset{border:1px solid var(--line,#d8dedb);border-radius:12px;padding:12px}.rateEditor legend{padding:0 6px;font-weight:700}
 #gameEditFields{border:0;padding:0;margin:0;min-width:0}#gamePlays{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}.entry .delete-order{color:#a12835}.entry .actions{flex-wrap:wrap}.entry pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .stats.daily-units{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+
+/* Keep native controls and scrollable tables inside their own grid tracks. */
+.grid > *, .stats > *, .rates > *, .column-field > *, .scroll {
+  min-width: 0;
+}
+input:not([type=checkbox]), select, textarea { min-width: 0; max-width: 100%; }
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+input[type="date"]::-webkit-date-and-time-value { min-width: 0; margin: 0; text-align: left; }
+.scroll { max-width: 100%; }
+#cloudApp, dialog { overflow-wrap: anywhere; }
+#openingDialog, #gameDialog, #accountDialog {
+  --dialog-top: max(12px, env(safe-area-inset-top));
+  --dialog-bottom: max(12px, env(safe-area-inset-bottom));
+  --dialog-left: max(12px, env(safe-area-inset-left));
+  --dialog-right: max(12px, env(safe-area-inset-right));
+  inset: var(--dialog-top) var(--dialog-right) var(--dialog-bottom) var(--dialog-left);
+  width: min(540px, calc(100% - var(--dialog-left) - var(--dialog-right)));
+  max-width: none;
+  max-height: calc(100% - var(--dialog-top) - var(--dialog-bottom));
+  max-height: calc(100dvh - var(--dialog-top) - var(--dialog-bottom));
+  padding: 22px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--ink);
+  background: var(--paper);
+}
+#accountDialog { width: min(490px, calc(100% - var(--dialog-left) - var(--dialog-right))); }
+#openingDialog::backdrop, #gameDialog::backdrop { background: #15244191; }
+#openingFields { margin: 0; padding: 0; border: 0; min-width: 0; }
+#loginPanel {
+  margin: 0;
+  padding-top: max(clamp(24px, 7svh, 64px), env(safe-area-inset-top));
+  padding-right: max(24px, env(safe-area-inset-right));
+  padding-bottom: max(clamp(24px, 7svh, 64px), env(safe-area-inset-bottom));
+  padding-left: max(24px, env(safe-area-inset-left));
+}
+main {
+  padding-top: max(22px, env(safe-area-inset-top));
+  padding-right: max(20px, env(safe-area-inset-right));
+  padding-bottom: max(50px, env(safe-area-inset-bottom));
+  padding-left: max(20px, env(safe-area-inset-left));
+}
+
+@media (max-width: 640px) {
+  body { font-size: 17px; }
+  main {
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    padding-left: max(10px, env(safe-area-inset-left));
+  }
+  header, .panel { padding: 14px; }
+  header .grid { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  header h1 { font-size: clamp(24px, 7vw, 32px); }
+  #datePicker { grid-column: 1 / -1; grid-row: 2; }
+  .header-account { grid-column: 2; gap: 8px; }
+  .header-account button { padding-inline: 10px; font-size: 16px; }
+  .account-avatar { width: 32px; height: 32px; }
+  nav { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  nav button { grid-column: span 2; min-width: 0; padding: 6px 3px; font-size: clamp(14px, 4.2vw, 17px); white-space: normal; }
+  nav button:nth-last-child(-n + 2) { grid-column: span 3; }
+  .grid, .rates, .book-settings .grid, .compare-grid { grid-template-columns: minmax(0, 1fr); }
+  .book-settings .actions { padding-bottom: 0; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .stats.daily-units { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats .heroStat { grid-column: 1 / -1; }
+  .cards > div { padding: 10px; }
+  .stats strong { font-size: clamp(20px, 5.5vw, 26px); }
+  .star-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .star-grid input { padding-inline: 6px; }
+  .order-switch button { font-size: 17px; padding: 6px; }
+  .column-field { grid-template-columns: minmax(0, 1fr) auto; }
+  textarea { min-height: 130px; }
+  .rateGrid { grid-template-columns: minmax(47px, 1fr) repeat(3, minmax(0, 1fr)); font-size: 16px; gap: 5px; }
+  .rateGrid input { padding-inline: 4px; }
+  .order-preview { padding-inline: 8px; }
+  .order-preview th, .order-preview td { padding: 6px; }
+  .permissions-table td, .permissions-table th { min-width: 74px; padding: 9px 10px; font-size: 16px; }
+  .permissions-table td:nth-child(2) { overflow-wrap: anywhere; min-width: 155px; }
+  #openingDialog, #gameDialog, #accountDialog { padding: 16px; }
+}
 </style>
 </head>
 <body><main>
