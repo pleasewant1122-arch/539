@@ -39,7 +39,7 @@ input[type=checkbox]{width:23px;height:23px;vertical-align:middle;margin:0 5px 0
 textarea{min-height:150px;padding:10px 12px}label,summary{font-weight:730}summary{color:#173673}
 nav button,.order-switch button{font-size:19px;min-height:48px}.rateGrid input{min-width:0}.rateGrid strong{overflow-wrap:anywhere}
 :focus-visible{outline:3px solid #a0470d;outline-offset:3px}.compare-card{padding:16px}.hit-number{padding:2px 5px}
-.photo-thumb{margin:0}.photo-thumb img{display:block;width:100%;object-fit:contain}.photo-thumb figcaption{overflow-wrap:anywhere;color:var(--muted)}
+
 @media(max-width:550px){
   main{padding:10px 10px 32px}header,.panel{padding:14px}
   header .grid{grid-template-columns:minmax(0,1fr) auto;gap:8px}
@@ -127,6 +127,9 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
   display:block;margin:12px 0 0;color:#fff;font-size:14px;overflow-wrap:anywhere;
 }
 #loginPanel #loginMessage:empty{min-height:0;margin:0}
+.rateEditor{display:grid;gap:12px}.rateEditor fieldset{border:1px solid var(--line,#d8dedb);border-radius:12px;padding:12px}.rateEditor legend{padding:0 6px;font-weight:700}
+#gameEditFields{border:0;padding:0;margin:0;min-width:0}#gamePlays{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}.entry .delete-order{color:#a12835}.entry .actions{flex-wrap:wrap}.entry pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.stats.daily-units{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
 </style>
 </head>
 <body><main>
@@ -185,11 +188,11 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 </nav>
 <div id="view-today">
 <section class="panel"><h2>輸入開獎號碼</h2>
-<div class="grid"><label>539<input id="draw539" placeholder="05.17.26.32.38"></label><label>大樂透主號<input id="drawlotto" placeholder="03.14.15.23.43.48"></label><label>天天樂<input id="drawdaily" placeholder="輸入開獎號碼"></label></div>
+<div class="grid" id="drawFields"></div>
 <button id="saveDayInputs" type="button">儲存開獎與補登</button><output id="dayInputsMessage" aria-live="polite"></output>
 </section>
 <section class="panel"><h2>當日結算</h2>
-<div id="dailyUnits" class="stats cards daily-units" aria-label="今日二星及三星總支數"></div>
+<div id="dailyUnits" class="stats cards daily-units" aria-label="今日二星、三星與單號車總支數"></div>
 <div id="accountCards" class="stats cards"></div>
 <p id="recordedNet" class="hint cashHelp" hidden></p>
 <div class="actions"><button id="postDay">儲存本日結算</button><button id="toOrders" class="secondary">加入牌單</button></div>
@@ -203,8 +206,8 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 <div id="view-orders" hidden>
 <section class="panel order-panel"><h2>加單</h2>
 <div class="order-switch" role="group" aria-label="選擇操作">
-<button type="button" data-order-view="direct" aria-pressed="true">輸入一筆</button>
-<button type="button" data-order-view="paste" aria-pressed="false">照片／貼文字</button>
+<button type="button" data-order-view="direct" aria-pressed="true">輸入單筆</button>
+<button type="button" data-order-view="paste" aria-pressed="false">輸入多筆</button>
 </div>
 <div id="orderIdentity" class="grid">
 <label>彩種<select id="defaultGame"></select></label>
@@ -212,7 +215,7 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 </div>
 <div id="order-direct">
 <div class="order-step"><h3>選玩法、填號碼</h3>
-<label>玩法<select id="orderMode"><option value="full">連碰｜一整組號碼互碰</option><option value="column">立柱｜從不同柱各取一碼</option><option value="car">全車｜整組計車數</option><option value="single">單號車｜每個號碼各自計車數</option></select></label>
+<label>玩法<select id="orderMode"><option value="full">連碰｜一整組號碼互碰</option><option value="column">立柱｜從不同柱各取一碼</option><option value="single">單號車｜每個號碼各自計車數</option></select></label>
 <p id="orderHelp" class="hint"></p>
 <label id="singleGroup">這一組的號碼<input id="quickNumbers" placeholder="例如 01、02、03、04"></label>
 <div id="columnGroup" hidden><div id="orderColumns" class="grid"></div><button id="addColumn" type="button" class="secondary">＋ 再加一柱</button></div>
@@ -226,17 +229,12 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 <button id="quickAdd" type="button">加入這筆牌單</button>
 </div>
 <div id="order-paste" hidden>
-<div class="order-step">
-<details><summary>對照紙本照片</summary>
-<p class="hint">選擇照片後，可一邊看原圖，一邊在下方輸入號碼。</p>
-<label>選擇照片，可一次選多張<input id="photos" type="file" accept="image/*" multiple></label>
-<div id="photoList" class="grid"></div>
-</details></div>
 <div class="order-step"><h3>牌單文字</h3>
-<p class="hint">可直接貼上客人的文字。跨彩種可用「539：」「大樂透：」「天天樂：」分段。</p>
+<p class="hint">可直接貼上客人的文字。跨彩種可用彩種名稱加冒號分段，例如「539：」「六合彩：」。每組號碼另起一行。</p>
 <label>核對文字、補上缺漏<textarea id="orders" placeholder="05、25碰14、26碰36、39&#10;二×0.75&#10;三×0.75"></textarea></label>
 <label><input id="paperNotation" type="checkbox"> 手動轉錄紙本簡寫（30 換成 0.3）</label>
 </div>
+<div id="pastePreview" class="order-preview" aria-live="polite" hidden></div>
 <div class="actions"><button id="add" type="button">加入文字牌單</button><button id="cancelEdit" type="button" class="secondary" hidden>取消修改</button></div>
 </div>
 <output id="message" aria-live="polite"></output>
@@ -277,13 +275,16 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
   <output id="permissionMessage" aria-live="polite"></output>
 </section>
 <section class="panel"><h2>後台設定</h2>
+<div class="grid">
 <label>要設定的彩種<select id="rateGame"></select></label>
-<p class="hint">成本用來算當日收款。賠付基數 × 賠率 × 命中支數／車數，算出中獎金額。全車會把同一筆的命中號數乘進去。</p>
+<div class="actions"><button id="newGame" type="button">新增彩種</button><button id="editGame" type="button" class="secondary">編輯／停用彩種</button></div>
+</div>
+<p class="hint">成本＝單位成本 × 計價數量。中獎＝賠付基數 × 賠率 × 命中計價數量。</p>
 <div id="rates" class="rates"></div>
 <details><summary>開獎與進位規則</summary><div class="grid">
 <label>尾數算法<select id="tails"><option value="">待確認</option><option value="expand">展開成個別號碼</option><option value="group">每個尾數算一個選項</option></select></label>
 <label>成本取整<select id="rounding"><option value="star">各玩法取整再加總</option><option value="total">加總後取整</option></select></label>
-<label>天天樂號碼上限<input id="dailyMax" type="number" min="1" max="99" step="1"></label><label>天天樂開獎顆數<input id="dailyCount" type="number" min="1" max="99" step="1"></label>
+
 </div></details>
 <div class="actions"><button id="saveRates">儲存設定</button></div>
 <output id="settingsMessage" aria-live="polite"></output>
@@ -293,6 +294,27 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 </section></div>
 </div>
 </main>
+<dialog id="gameDialog" aria-labelledby="gameDialogTitle">
+<form id="gameForm">
+  <h2 id="gameDialogTitle">新增彩種</h2>
+  <fieldset id="gameEditFields">
+    <label>彩種名稱<input id="gameTitle" required maxlength="40"></label>
+    <label>文字牌單辨識名稱<input id="gameAliases" maxlength="200" placeholder="多個名稱以逗號分隔"></label>
+    <p id="gameAliasHistory" class="hint"></p>
+    <div class="grid">
+      <label>最小號碼<input id="gameMin" type="number" min="0" max="99" step="1" required></label>
+      <label>最大號碼<input id="gameMax" type="number" min="1" max="99" step="1" required></label>
+      <label>開獎主號顆數<input id="gameCount" type="number" min="1" max="99" step="1" required></label>
+      <label>每車支數<input id="gameShares" type="number" min="1" max="999999" step="1" required></label>
+    </div>
+    <label>狀態<select id="gameEnabled"><option value="yes">啟用</option><option value="no">停用</option></select></label>
+    <label><input id="gameSpecial" type="checkbox"> 可另外輸入一顆特別號</label>
+    <div id="gamePlays"></div>
+    <div class="actions"><button type="submit">儲存彩種</button><button type="button" id="cancelGame" class="secondary">取消</button></div>
+  </fieldset>
+  <output id="gameMessage" aria-live="polite"></output>
+</form>
+</dialog>
 <dialog id="accountDialog" aria-labelledby="accountDialogTitle">
   <form id="accountForm">
     <h2 id="accountDialogTitle">新增授權帳號</h2>
@@ -533,22 +555,37 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 </script>
 <script>
 "use strict";
-const games = {539:"539", lotto:"大樂透", daily:"天天樂"};
+const builtInGames = {
+  "539":{title:"539",aliases:["今彩539","今彩 539"],min:1,limit:39,count:5,shares:38},
+  lotto:{title:"大樂透",aliases:["大樂"],min:1,limit:49,count:6,shares:48},
+  daily:{title:"天天樂",aliases:["天天"],min:1,limit:null,count:null,shares:38},
+  mark6:{title:"六合彩",aliases:["六和彩","香港六合彩","Mark Six"],min:1,limit:49,count:6,shares:48,special:true}
+};
+const legacyGames=new Set(["539","lotto","daily"]);
 const types = {2:"二星",3:"三星",4:"四星",5:"全車",1:"單號車"};
-const keys = [2,3,4,5,1];
+const playTypes = [2,3,4,1];
 const unitName = type => type===1 || type===5 ? "車" : "支";
+let catalog={}, games={}, gameKeys=[];
 const threshold = 200000;
 const $ = id => document.getElementById(id);
-const gameKeys = Object.keys(games);
 const storeKey = "paidan-settlement-v1";
 const localDay = () => new Date().toLocaleDateString("sv-SE", {timeZone:"Asia/Taipei"});
 const numberFormat = new Intl.NumberFormat("zh-TW", {maximumFractionDigits:6});
 const fmt = number => numberFormat.format(number);
+const carFormat=new Intl.NumberFormat("zh-TW",{maximumFractionDigits:20});
+const fmtCar=number=>carFormat.format(number);
+const integerMoney=new Intl.NumberFormat("zh-TW",{maximumFractionDigits:0});
+const fmtTotal=value=>{const label=integerMoney.format(value||0); return label==="-0"?"0":label;};
+const precise=value=>Number(value.toPrecision(15));
 const rounded = number => Math.round((number + Number.EPSILON) * 1e8) / 1e8;
 const normal = value => value.normalize("NFKC").replace(/[❎✖×✕]/gu,"x").replace(/[\uFE0F\uFE0E]/gu,"").trim();
-const gameName = value => ({539:"539", 今彩539:"539", 大樂:"lotto", 大樂透:"lotto", 天天:"daily", 天天樂:"daily"})[value];
+const aliasKey=value=>normal(value).replace(/\s+/gu,"").toLowerCase();
+function gameName(value) {
+  const alias=aliasKey(value);
+  return gameKeys.find(game=>[catalog[game].title,...catalog[game].aliases].some(name=>aliasKey(name)===alias));
+}
 const star = value => ({二:2,三:3,四:4,2:2,3:3,4:4})[value];
-const emptyBook=()=>({entries:[],fields:{},daily:{},ledger:{}});
+const emptyBook=()=>({entries:[],fields:{},daily:{},ledger:{},catalog:{}});
 let state=emptyBook();
 let legacyBackup=null;
 try {
@@ -570,44 +607,187 @@ const oauthReturn=Boolean(oauthQuery("code")||oauthQuery("error")||oauthQuery("e
 const db=window.supabase?.createClient(projectUrl,projectKey,{auth:{flowType:"pkce",detectSessionInUrl:true}});
 let activeWorkspace=null, currentUser=null, listedWorkspaces=[], ready=false, busy=false, refreshing=false, authRevision=0;
 const changedDayInputs=new Set(), changedSettings=new Set();
-const fieldIds = ["day","draw539","drawlotto","drawdaily","tails","rounding","dailyMax","dailyCount","manualPrize","manualCost"];
+const ruleIds=["tails","rounding"];
+const manualIds=["manualCost","manualPrize"];
 function node(tag, content, className) {
   const el = document.createElement(tag);
   if (content !== undefined) el.textContent = content;
   if (className) el.className = className;
   return el;
 }
-const example = {
-  2:{cost:72,base:100,prize:53},
-  3:{cost:63,base:100,prize:570},
-  4:{cost:100,base:100,prize:7500},
-  5:{cost:3800,base:3800,prize:5.5789}
+const pricingOptions={
+  1:[["car","按車"],["share","按換算支數"]],
+  2:[["share","按支"],["combo","按組數"]],
+  3:[["share","按支"],["combo","按組數"]],
+  4:[["share","按支"],["combo","按組數"]]
 };
-function createRates() {
-  for (const [game,title] of Object.entries(games)) {
-    $("defaultGame").append(new Option(title,game));
-    $("rateGame").append(new Option(title,game));
-    const group = node("div",undefined,"rateGrid");
-    group.id = "rate-grid-"+game;
-    group.append(...["玩法","成本／單位","賠付基數","賠率倍率"].map(x=>node("strong",x)));
-    for (const type of keys) {
-      group.append(node("strong",types[type]));
-      for (const [name,label] of [["cost","成本"],["base","賠付基數"],["prize","賠率倍率"]]) {
-        const id = [name,game,type].join("-");
-        const field = node("input");
-        Object.assign(field,{id,type:"number",min:"0",step:name==="prize"?"any":"0.01"});
-        field.setAttribute("aria-label", title+" "+types[type]+" "+label);
-        field.value=String(example[type]?.[name]??"");
-        group.append(field);
-        fieldIds.push(id);
-      }
+const hitOptions=[["main","只看開獎主號"],["with_special","主號及特別號"]];
+let catalogSignature="";
+let gameBeingEdited=null;
+function config(game) { return Object.hasOwn(catalog,game)?catalog[game]:null; }
+function replaceOptions(select,choices,previous=select.value) {
+  select.replaceChildren(...choices.map(([value,label])=>new Option(label,value)));
+  if (choices.some(([value])=>value===previous)) select.value=previous;
+}
+function legacyRateValue(game,type,label) {
+  if (!legacyGames.has(game) || ![1,2,3,4].includes(type)) return "pending";
+  return label==="unit"?(type===1?"car":"share"):"main";
+}
+function addRateFields(game) {
+  const info=config(game);
+  const group=node("div",undefined,"rateEditor");
+  group.dataset.game=game;
+  for (const type of playTypes.filter(type=>info.plays.includes(type))) {
+    const fields=node("fieldset");
+    const grid=node("div",undefined,"grid");
+    fields.append(node("legend",types[type]),grid);
+    for (const [key,title] of [["cost","單位成本"],["base","賠付基數"],["prize","賠率倍率"],["unit","計價單位"],["hit","命中規則"]]) {
+      const label=node("label",title);
+      const choices=key==="unit"?pricingOptions[type]:key==="hit"?hitOptions:null;
+      const input=node(choices?"select":"input");
+      input.id=[key,game,type].join("-");
+      if (choices) replaceOptions(input,[["pending","待設定"],...choices]);
+      else Object.assign(input,{type:"number",min:"0",step:key==="prize"?"0.00000001":"0.01",placeholder:"待設定"});
+      label.append(input); grid.append(label);
     }
-    $("rates").append(group);
+    group.append(fields);
+  }
+  $("rates").append(group);
+}
+function syncOrderModes() {
+  const plays=config($("defaultGame").value)?.plays??[];
+  const options=[];
+  if (plays.some(type=>type!==1)) options.push(["full","連碰｜整組號碼互碰"],["column","立柱｜從不同柱各取一碼"]);
+  if (plays.includes(1)) options.push(["single","單號車｜每個號碼各自計車數"]);
+  replaceOptions($("orderMode"),options);
+  for (const type of [2,3,4]) $("quickStar"+type).parentElement.hidden=!plays.includes(type);
+  showQuickMode();
+}
+function syncOrderGameOptions(preferred=$("defaultGame").value) {
+  const choices=gameKeys.filter(game=>catalog[game].enabled || game===editing?.defaultGame)
+    .map(game=>[game,games[game]+(catalog[game].enabled?"":"（已停用）")]);
+  replaceOptions($("defaultGame"),choices,preferred);
+  syncOrderModes();
+}
+function syncCatalog(force=false) {
+  const next=Object.fromEntries(Object.entries(builtInGames).map(([key,info])=>[key,{
+    enabled:true,plays:[...playTypes],special:false,revision:null,...info,
+    ...(key==="daily"?state.legacyDaily:{})
+  }]));
+  const signature=JSON.stringify([next,state.catalog]);
+  if (!force&&signature===catalogSignature) return;
+  catalogSignature=signature;
+  const drafts=new Map([...changedSettings,...changedDayInputs].filter(id=>$(id)).map(id=>[id,$(id).value]));
+  catalog={...next,...state.catalog};
+  gameKeys=Object.keys(catalog);
+  games=Object.fromEntries(gameKeys.map(game=>[game,catalog[game].title]));
+  syncOrderGameOptions();
+  replaceOptions($("rateGame"),gameKeys.map(game=>[game,games[game]+(catalog[game].enabled?"":"（已停用）")]));
+  $("rates").replaceChildren();
+  $("drawFields").replaceChildren();
+  for (const game of gameKeys) {
+    addRateFields(game);
+    const fields=node("div");
+    fields.dataset.game=game;
+    for (const [prefix,label] of [["draw","開獎主號"],["special","特別號"]]) {
+      const field=node("input");
+      field.id=prefix+game;
+      field.inputMode="numeric";
+      field.placeholder=prefix==="draw"?"號碼以空格或逗號隔開":"選填";
+      const wrap=node("label",games[game]+" "+label);
+      wrap.append(field); fields.append(wrap);
+    }
+    $("drawFields").append(fields);
+  }
+  for (const id of changedSettings) if (!$(id)) changedSettings.delete(id);
+  for (const [id,value] of drafts) if ($(id)) $(id).value=value;
+  showRateGame();
+}
+function applySettings() {
+  for (const id of ruleIds) if (!changedSettings.has(id)) $(id).value=state.fields[id]??(id==="rounding"?"star":"");
+  for (const game of gameKeys) for (const type of playTypes) for (const label of Object.keys(rateFields)) {
+    const id=[label,game,type].join("-");
+    if (!$(id) || changedSettings.has(id)) continue;
+    $(id).value=state.fields[id]||(label==="unit"||label==="hit"?legacyRateValue(game,type,label):"");
   }
 }
-function perHitPrize(key) {
-  const base=nonnegative("base-"+key), multiplier=nonnegative("prize-"+key);
-  return base===null || multiplier===null ? null : rounded(base*multiplier);
+function openGameDialog(game=null) {
+  gameBeingEdited=game;
+  const info=config(game);
+  $("gameForm").reset();
+  $("gameDialogTitle").textContent=info?"編輯／停用彩種":"新增彩種";
+  $("gameMessage").textContent="";
+  $("gameTitle").value=info?.title??"";
+  $("gameAliases").value=info?.aliases.join("、")??"";
+  $("gameAliasHistory").textContent=info?"目前名稱與既有辨識名稱會保留，使已儲存的文字仍能辨識。":"";
+  $("gameMin").value=info?.min??1;
+  $("gameMax").value=info?.limit??"";
+  $("gameCount").value=info?.count??"";
+  $("gameShares").value=info?.shares??"";
+  $("gameEnabled").value=info?.enabled===false?"no":"yes";
+  $("gameSpecial").checked=!!info?.special;
+  $("gamePlays").replaceChildren(...playTypes.map(type=>{
+    const label=node("label"), field=node("input");
+    Object.assign(field,{type:"checkbox",value:String(type),checked:info?info.plays.includes(type):true});
+    label.append(field," "+types[type]); return label;
+  }));
+  $("gameDialog").showModal();
+}
+$("newGame").addEventListener("click",()=>openGameDialog());
+$("editGame").addEventListener("click",()=>openGameDialog($("rateGame").value));
+$("cancelGame").addEventListener("click",()=>$("gameDialog").close());
+$("gameDialog").addEventListener("cancel",event=>{if ($("gameEditFields").disabled) event.preventDefault();});
+$("gameForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if ($("gameEditFields").disabled) return;
+  const old=config(gameBeingEdited), title=$("gameTitle").value.trim();
+  const aliases=new Map([...(old?[old.title,...old.aliases]:[]),...$("gameAliases").value.split(/[、,，\n]/u)]
+    .map(name=>name.trim()).filter(name=>name&&name!==title).map(name=>[aliasKey(name),name]));
+  const min=nonnegative("gameMin"), max=nonnegative("gameMax"), count=nonnegative("gameCount");
+  const shares=nonnegative("gameShares"), special=$("gameSpecial").checked;
+  const plays=[...$("gamePlays").querySelectorAll("input:checked")].map(field=>Number(field.value));
+  if (!title || [title,...aliases.values()].some(name=>/[:：;；\r\n]/u.test(name))) {
+    $("gameMessage").textContent="請輸入彩種名稱，名稱和辨識名稱不可包含冒號或分號。"; return;
+  }
+  if ([title,...aliases.values()].some(name=>{const match=gameName(name); return match&&match!==gameBeingEdited;})) {
+    $("gameMessage").textContent="彩種名稱或辨識名稱與另一彩種重複。"; return;
+  }
+  if (min===null || !max || !count || !shares || count+(special?1:0)>max-min+1 || !plays.length) {
+    $("gameMessage").textContent="請確認號碼範圍可容納主號與特別號，並勾選至少一項玩法。"; return;
+  }
+  const game=gameBeingEdited??"g_"+newRequestId().replaceAll("-","");
+  const fields={title,aliases:[...aliases.values()],min_number:min,max_number:max,draw_count:count,
+    shares_per_car:shares,special_enabled:special,play_types:plays,enabled:$("gameEnabled").value==="yes"};
+  $("gameEditFields").disabled=true;
+  try {
+    const ok=await runWrite("gameMessage",async workspace=>{
+      if (old?.revision!=null) {
+        const rows=await response(db.from("paidan_game_settings").update(fields).eq("owner_id",workspace).eq("game",game)
+          .eq("revision",old.revision).select("game"));
+        if (!rows.length) throw Error("彩種已被其他成員變更，請關閉後重新編輯。");
+      } else await response(db.from("paidan_game_settings").insert({owner_id:workspace,game,...fields}));
+    });
+    if (ok) {
+      $("gameDialog").close();
+      if (config(game)) $("rateGame").value=game;
+      showRateGame();
+      $("settingsMessage").textContent="已儲存彩種。";
+    }
+  } finally { $("gameEditFields").disabled=false; }
+});
+function rateFor(game,type) {
+  const key=game+"-"+type;
+  const read=label=>$(label+"-"+key)?.value||state.fields[label+"-"+key]||legacyRateValue(game,type,label);
+  const amount=label=>{
+    const id=label+"-"+key;
+    return $(id)?nonnegative(id):state.fields[id]?Number(state.fields[id]):null;
+  };
+  const cost=amount("cost"), base=amount("base"), multiplier=amount("prize");
+  if (type===5) return {cost,prize:base===null||multiplier===null?null:rounded(base*multiplier),unit:"car",hit:"main"};
+  return {
+    cost,prize:base===null||multiplier===null?null:precise(base*multiplier),
+    unit:read("unit"),hit:read("hit")
+  };
 }
 function readNumbers(raw) {
   const source = raw.trim();
@@ -632,7 +812,7 @@ function parseGroups(source) {
   }
   return cleaned.split(/碰|[xX]/u).map(groupTokens);
 }
-function parseOrders(raw, fallbackGame, paperNotation=false) {
+function parseOrders(raw, fallbackGame, paperNotation=false, historical=false) {
   const weight = value => paperNotation && /^\d{2,3}$/u.test(value) ? Number(value)/100 : Number(value);
   const rows = [], errors = [];
   let game = fallbackGame, parts = [], row = null;
@@ -648,44 +828,53 @@ function parseOrders(raw, fallbackGame, paperNotation=false) {
     if (!numbers.trim()) throw Error("缺少號碼");
     const groups = parseGroups(numbers);
     if (groups.length>16) throw Error("立柱最多 16 柱");
-    row = { game, groups, values:{}, original:numbers };
+    if (!Object.hasOwn(catalog,game)) throw Error("彩種待設定");
+    row = { game, groups, values:{}, written:{}, original:numbers };
   }
-  for (const original of raw.split(/\r?\n/u)) {
+  for (const original of raw.split(/\r?\n|[；;]/u)) {
     let line = normal(original);
     if (!line || /^[-─—]{3,}$/u.test(line)) continue;
-    const head = line.match(/^(今彩\s*539|539|大樂透?|天天樂?)\s*:\s*/u);
-    if (head) {
+    const head = line.match(/^([^:]+):\s*/u);
+    const heading = gameName(head ? head[1] : line);
+    if (heading && (head || !/^[0-9]+$/u.test(line) || line==="539")) {
       commit();
       pending();
-      game = gameName(head[1].replace(/\s/gu,""));
-      line = line.slice(head[0].length);
+      game = heading;
+      line = head ? line.slice(head[0].length) : "";
       if (!line) continue;
+    } else if (head) {
+      commit();
+      pending();
+      errors.push("無法辨識彩種｜"+head[1]);
+      game=null;
+      continue;
     }
     if (/^(取消|作廢)/u.test(line)) { commit(); pending(); continue; }
     try {
+      if (!historical && /全\s*車/u.test(line)) throw Error("請核對「全車」原意，再改成單號車格式，例如「05、17 × 0.5 車」。");
       const fullCar=line.match(/^(.*?)\s*全車\s*[xX=]?\s*(\d+(?:\.\d+)?)$/u);
       if (fullCar) {
         commit();
         open([...parts,fullCar[1]].join(" "));
         parts=[];
         if (row.groups.length!==1) throw Error("全車請輸入一組號碼");
-        row.values[5]=weight(fullCar[2]); commit(); continue;
+        row.values[5]=weight(fullCar[2]); row.written[5]=fullCar[2]; commit(); continue;
       }
-      const car = line.match(/^(.*?)\s*(?:各|坐|[xX]|車)\s*(\d+(?:\.\d+)?)\s*車?$/u);
+      const car = line.match(/^(.*?)\s*(?:單號車\s*[xX=]?|各|坐|[xX]|車)\s*(\d+(?:\.\d+)?)\s*車?$/u);
       if (car && (line.includes("車") || line.includes("各"))) {
         commit();
         if (!line.includes("車")) throw Error("請確認是否為單號車，確認後補上「車」");
         open([...parts,car[1]].join(" "));
         parts = [];
         if (row.groups.length !== 1) throw Error("單號車請輸入一組號碼");
-        row.values[1] = weight(car[2]);
+        row.values[1] = weight(car[2]); row.written[1]=car[2];
         commit();
         continue;
       }
       const carSuffix = line.match(/^(\([^()]+\))\s*車\s*(\d+(?:\.\d+)?)$/u);
       if (carSuffix) {
         commit(); pending(); open(carSuffix[1]);
-        row.values[1] = weight(carSuffix[2]); commit(); continue;
+        row.values[1] = weight(carSuffix[2]); row.written[1]=carSuffix[2]; commit(); continue;
       }
       const amount = /([二三四]{1,3}|(?<![0-9.])[234]{1,3})\s*(?:星\s*[xX=]?|[xX=])\s*(\d+(?:\.\d+)?)/gu;
       const matches = [...line.matchAll(amount)];
@@ -703,7 +892,7 @@ function parseOrders(raw, fallbackGame, paperNotation=false) {
           for (const code of stars) {
             const kind = star(code);
             if (row.values[kind] !== undefined) throw Error("同一筆重複填寫星別");
-            row.values[kind] = weight(value);
+            row.values[kind] = weight(value); row.written[kind]=value;
           }
         }
         continue;
@@ -723,26 +912,54 @@ function parseOrders(raw, fallbackGame, paperNotation=false) {
 }
 function nonnegative(id) {
   const field = $(id);
-  if (field.value === "" || !field.validity.valid) return null;
+  if (!field || field.value === "" || !field.validity.valid) return null;
   const value = Number(field.value);
   return Number.isFinite(value) && value >= 0 ? value : null;
 }
-function config(game) {
-  if (game === "539") return {limit:39,count:5};
-  if (game === "lotto") return {limit:49,count:6};
-  return {limit:nonnegative("dailyMax"),count:nonnegative("dailyCount")};
+function numberRange(game,historicalFullCar=false) {
+  const rules=historicalFullCar?(game==="daily"?state.legacyDaily:builtInGames[game]):config(game);
+  return {min:rules?.min??1,max:rules?.limit??null};
+}
+const drawId=game=>"draw"+game;
+const specialId=game=>"special"+game;
+const dayFieldIds=()=>[...manualIds,...gameKeys.flatMap(game=>[drawId(game),specialId(game)])];
+function syncDrawVisibility() {
+  const date=$("day").value;
+  for (const fields of $("drawFields").children) {
+    const game=fields.dataset.game, info=config(game);
+    const saved=state.daily[date]?.[drawId(game)];
+    fields.hidden=!info.enabled&&!saved&&!$(drawId(game)).value.trim();
+    $(specialId(game)).parentElement.hidden=!info.special&&!$(specialId(game)).value.trim();
+    $(specialId(game)).readOnly=!info.special;
+  }
 }
 function drawFor(game) {
-  if (!$("draw"+game).value.trim()) return {values:null,issue:"尚未輸入開獎號碼"};
+  const unavailable=issue=>({values:null,special:null,issue});
+  const main=$(drawId(game)).value.trim(), bonus=$(specialId(game)).value.trim();
+  if (!main) return unavailable(bonus?"請先輸入開獎主號":"尚未輸入開獎號碼");
   try {
-    const {limit,count} = config(game);
-    if (!limit || !count || count > limit) throw Error("請填入天天樂的號碼上限與開獎顆數");
-    const values = readNumbers(normal($("draw"+game).value));
-    if (values.length !== count || new Set(values).size !== count || values.some(n => n < 1 || n > limit)) {
-      throw Error("開獎號碼須為 " + count + " 個不重複的 01–" + limit + " 號碼");
+    const {min,max}=numberRange(game);
+    const count=config(game).count;
+    const values=readNumbers(normal(main));
+    const saved=state.daily[$("day").value];
+    const unchanged=saved?.[drawId(game)]===main&&!changedDayInputs.has(drawId(game));
+    if (!unchanged) {
+      if (max==null || !count) throw Error("請先設定彩種號碼範圍及開獎顆數");
+      if (values.length!==count || new Set(values).size!==count || values.some(n=>n<min||n>max)) {
+        throw Error("開獎主號須為 "+count+" 個不重複的 "+displayNumber(min)+"–"+displayNumber(max)+" 號碼");
+      }
     }
-    return {values,issue:""};
-  } catch (err) { return {values:null,issue:err.message}; }
+    let special=null;
+    if (bonus) {
+      const parsed=readNumbers(normal(bonus));
+      if (parsed.length!==1 || values.includes(parsed[0]) ||
+          (bonus!==saved?.[specialId(game)] && (!config(game).special||parsed[0]<min||parsed[0]>max))) {
+        return {values,special:null,issue:"請填入一顆有效且不與主號重複的特別號",specialInvalid:true};
+      }
+      special=parsed[0];
+    }
+    return {values,special,issue:""};
+  } catch (error) { return unavailable(error.message); }
 }
 function choose(items,count,start=0) {
   if (count === 0) return [[]];
@@ -750,19 +967,19 @@ function choose(items,count,start=0) {
   for (let i=start;i<=items.length-count;i++) for (const rest of choose(items,count-1,i+1)) result.push([items[i],...rest]);
   return result;
 }
-function expandGroups(groups, game) {
-  const max = config(game).limit;
-  if (!max) throw Error("請先填天天樂號碼上限");
+function expandGroups(groups, game, historicalFullCar=false) {
+  const {min,max}=numberRange(game,historicalFullCar);
+  if (max==null) throw Error("請先設定彩種號碼範圍");
   return groups.map(group => {
     const expanded = group.flatMap(({value,tail}) => {
       if (!tail) {
-        if (value < 1 || value > max) throw Error("號碼超出此彩種範圍");
+        if (value < min || value > max) throw Error("號碼超出此彩種範圍");
         return [value];
       }
       if (value < 0 || value > 9) throw Error("尾數須為 0–9");
       if (!$("tails").value) throw Error("尾數算法待確認");
       if ($("tails").value === "group") return ["t"+value];
-      return Array.from({length:max},(_,i)=>i+1).filter(n=>n%10 === value);
+      return Array.from({length:max-min+1},(_,i)=>i+min).filter(n=>n%10 === value);
     });
     if (new Set(expanded).size !== expanded.length) throw Error("同柱出現重複號碼");
     if (!expanded.length) throw Error("這一柱沒有可用號碼");
@@ -803,9 +1020,69 @@ function hits(combo,draw) {
 }
 function calcLine(row,type,weight,draw) {
   if (!Number.isFinite(weight) || weight <= 0) throw Error("每組數量須大於零");
-  const combos = combinations(expandGroups(row.groups,row.game),type===5?1:type);
-  const win = draw ? combos.filter(combo=>hits(combo,draw)) : [];
+  const expanded=expandGroups(row.groups,row.game,type===5);
+  if (type===1 && expanded.length!==1) throw Error("單號車請輸入一組號碼");
+  const combos=combinations(expanded,type===5?1:type);
+  if (type===1 && combos.some(([value])=>typeof value!=="number")) throw Error("單號車須有實際號碼，請列出號碼或使用展開尾數");
+  const win=draw?combos.filter(combo=>hits(combo,draw)):[];
+  if (type===1) {
+    const perCar=config(row.game).shares;
+    const units=precise(combos.length*weight),winUnits=precise(win.length*weight);
+    const shares=Number.isFinite(perCar)&&perCar>0?precise(units*perCar):null;
+    return {groups:combos.length,units,win,winUnits,shares,winShares:shares===null?null:precise(winUnits*perCar)};
+  }
   return {groups:combos.length,units:rounded((type===5?1:combos.length)*weight),win,winUnits:rounded(win.length*weight)};
+}
+function orderNumbers(row) {
+  return row.groups.map((group,index)=>(row.groups.length>1?"第 "+(index+1)+" 柱 ":"")+
+    group.map(token=>displayNumber(token.tail?"t"+token.value:token.value)).join("、")).join("｜");
+}
+function orderPlay(row,type) {
+  return type===1||type===5?types[type]:(row.groups.length>1?"立柱":"連碰")+" · "+types[type];
+}
+function orderQuantity(type,weight,result,written=null) {
+  const original=written==null?fmtCar(weight):written;
+  const paper=written!=null&&Number(written)!==weight?"（手寫 "+written+"）":"";
+  const amount=(paper?fmtCar(weight):original)+(type===1||type===5?" 車":"")+paper;
+  if (type!==1) return "× "+amount;
+  if (!result) return "每號 × "+amount+"｜部分待核對";
+  return "每號 × "+amount+"｜合計 "+fmtCar(result.units)+" 車／"+
+    (result.shares===null?"支數待設定":fmtCar(result.shares)+" 支");
+}
+function appendOrderSummary(box,parsed) {
+  for (const row of parsed.rows) {
+    const group=node("div",undefined,"compare-card");
+    group.append(node("strong",games[row.game]+"｜"+orderNumbers(row)));
+    const lines=node("ul",undefined,"compare-lines");
+    for (const [kind,weight] of Object.entries(row.values)) {
+      const type=Number(kind);
+      let result=null;
+      try { if (type===1) result=calcLine(row,type,weight,null); } catch {}
+      lines.append(node("li",orderPlay(row,type)+"｜"+orderQuantity(type,weight,result,row.written[type])));
+    }
+    group.append(lines); box.append(group);
+  }
+  for (const error of parsed.errors) box.append(node("p",error,"issue"));
+}
+function unchangedOrder(entry) {
+  return editing&&entry.raw===editing.raw&&entry.defaultGame===editing.defaultGame&&entry.paperNotation===editing.paperNotation;
+}
+function validateNewOrder(entry) {
+  const old=Boolean(unchangedOrder(entry));
+  if (!old&&/全\s*車/u.test(normal(entry.raw))) {
+    return {rows:[],errors:["請核對「全車」原意，再改成單號車格式，例如「05、17 × 0.5 車」。"]};
+  }
+  const parsed=parseOrders(entry.raw,entry.defaultGame,entry.paperNotation,old);
+  if (!old) for (const row of parsed.rows) {
+    if (!config(row.game)?.enabled) parsed.errors.push(games[row.game]+"已停用｜"+row.original);
+    for (const [kind,weight] of Object.entries(row.values)) {
+      const type=Number(kind);
+      if (!config(row.game)?.plays.includes(type)) parsed.errors.push(games[row.game]+"未啟用"+types[type]+"｜"+row.original);
+      try { calcLine(row,type,weight,null); }
+      catch (error) { parsed.errors.push(error.message+"｜"+row.original); }
+    }
+  }
+  return parsed;
 }
 function renderEntries() {
   const out=$("entries"); out.replaceChildren();
@@ -815,7 +1092,10 @@ function renderEntries() {
   for (const entry of entries) {
     const box=node("div",undefined,"entry");
     box.append(node("strong",(entry.cancelled ? "已取消｜" : "")+entry.customer+" · "+entry.date));
+    const parsed=parseOrders(entry.raw,entry.defaultGame,entry.paperNotation,true);
+    appendOrderSummary(box,parsed);
     const details=node("details"); details.append(node("summary","原始文字"),node("pre",entry.raw)); box.append(details);
+    const actions=node("div",undefined,"actions");
     const action=node("button",entry.cancelled ? "恢復此單" : "取消此單","secondary");
     action.addEventListener("click",()=>runWrite("message",async workspace=>{
       await editCloudOrder(workspace,entry,{cancelled:!entry.cancelled});
@@ -823,12 +1103,27 @@ function renderEntries() {
     }));
     const edit=node("button","修改此單","secondary");
     edit.addEventListener("click",()=>{
+      editing=entry;
       $("orders").value=entry.raw; $("customer").value=entry.customer;
-      $("defaultGame").value=entry.defaultGame; $("paperNotation").checked=!!entry.paperNotation; $("day").value=entry.date; $("day").dispatchEvent(new Event("change"));
-      editing=entry; $("add").textContent="儲存修改";
+      syncOrderGameOptions(entry.defaultGame);
+      $("paperNotation").checked=!!entry.paperNotation;
+      $("add").textContent="儲存修改";
       openOrderView("paste"); $("cancelEdit").hidden=false; $("orders").focus(); render();
     });
-    box.append(action,edit); out.append(box);
+    const remove=node("button","刪除此單","secondary delete-order");
+    remove.addEventListener("click",()=>{
+      const groups=parsed.rows.length>1?"（包含 "+parsed.rows.length+" 組下單）":"（包含此單內所有下單內容）";
+      if (!window.confirm("確定刪除整張牌單"+groups+"？刪除後無法恢復。\n\n日期 "+entry.date+"\n客人 "+entry.customer+"\n\n"+entry.raw)) return;
+      runWrite("message",async workspace=>{
+        await deleteCloudOrder(workspace,entry);
+        state.entries=state.entries.filter(row=>row.id!==entry.id);
+        if (state.ledger[entry.date]) (state.daily[entry.date]??={}).ordersDeleted=true;
+        if (editing?.id===entry.id) { resetEdit(); $("orders").value=""; }
+        $("message").textContent=state.ledger[entry.date]?"已刪除。請到當日結算核對並按「更新本日結算」。":"已刪除牌單。";
+        render();
+      });
+    });
+    actions.append(action,edit,remove); box.append(actions); out.append(box);
   }
 }
 function summaryTable(headers,rows) {
@@ -863,114 +1158,159 @@ function comparisonCard(customer,row,draw) {
     }
   }
   chosen.append(node("dt","客人下的號碼"),order);
-  opened.append(node("dt","當日開獎號碼"),node("dd",draw.values?draw.values.map(displayNumber).join("、"):draw.issue));
+  const openedText=draw.values?draw.values.map(displayNumber).join("、")+
+    (draw.special===null?"":"｜特別號 "+displayNumber(draw.special)):draw.issue;
+  opened.append(node("dt","當日開獎號碼"),node("dd",openedText));
   grid.append(chosen,opened);
   const stars=node("ul",undefined,"compare-lines");
   card.append(grid,stars);
   return {card,stars};
 }
-function comparisonLine(stars,type,result,draw,prize) {
+function pricingQuantity(result,type,unit,winning=false) {
+  if (unit==="car") return winning?result.winUnits:result.units;
+  if (unit==="combo") return winning?result.win.length:result.groups;
+  if (unit==="share") return type===1?(winning?result.winShares:result.shares):(winning?result.winUnits:result.units);
+  return null;
+}
+function matchStatus(draw,rule) {
+  if (rule!=="main"&&rule!=="with_special") return {values:null,issue:"命中規則待設定"};
+  if (!draw.values) return {values:null,issue:draw.issue};
+  if (rule==="main") return {values:draw.values};
+  if (draw.special===null) return {values:null,issue:draw.specialInvalid?draw.issue:"待輸入特別號"};
+  return {values:[...draw.values,draw.special]};
+}
+function measuredOrder(type,units,shares) {
+  if (type===1) return fmtCar(units)+" 車／"+(shares===null?"支數待設定":fmtCar(shares)+" 支");
+  return fmt(units)+" "+unitName(type);
+}
+function comparisonLine(stars,row,type,weight,result,matched,payout) {
   const line=node("li");
-  line.append(node("strong",types[type]),"｜下單 "+fmt(result.units)+" "+unitName(type)+"｜");
-  if (!draw.values) line.append("待開獎");
-  else if (!result.win.length) line.append("未中");
+  line.append(node("strong",orderPlay(row,type)),"｜"+orderQuantity(type,weight,result,row.written[type]));
+  if (type!==1) line.append("｜下單合計 "+measuredOrder(type,result.units));
+  if (!matched.values) line.append("｜"+matched.issue);
+  else if (!result.win.length) line.append("｜未中");
   else {
-    line.append(node("span",result.win.map(group=>group.map(displayNumber).join("–")).join("、"),"winning-combos"));
-    line.append("（"+result.win.length+(type===5||type===1?" 號":" 組")+"，命中 "+fmt(result.winUnits)+" "+unitName(type)+"）");
-    line.append(prize===null?"｜待填賠率":"｜中獎 "+fmt(rounded(result.winUnits*prize))+" 元");
+    line.append("｜",node("span",result.win.map(group=>group.map(displayNumber).join("–")).join("、"),"winning-combos"));
+    line.append("（"+result.win.length+(type===5||type===1?" 號":" 組")+"，命中 "+measuredOrder(type,result.winUnits,result.winShares)+"）");
   }
+  if (payout===null) line.append("｜中獎金額待設定");
+  else if (matched.values&&result.win.length) line.append("｜中獎 "+fmt(payout)+" 元");
   stars.append(line);
 }
 function renderDailyUnits(unitsByType,pendingTypes) {
   const out=$("dailyUnits"); out.replaceChildren();
-  for (const type of [2,3]) {
+  for (const type of [2,3,1]) {
     const item=node("div");
-    item.append(node("span",types[type]+"總支數"),node("strong",fmt(unitsByType[type]??0)+" 支"));
-    if (pendingTypes.has(type)) item.append(node("small","上方為已算支數，部分牌單待核對。"));
+    item.append(node("span",type===1?"車總支數":types[type]+"總支數"),node("strong",(type===1?fmtCar:fmt)(unitsByType[type]??0)+" 支"));
+    if (pendingTypes.has(type)) item.append(node("small","部分待核對（上方為已算支數）"));
     out.append(item);
   }
 }
 function renderResults() {
   const out=$("results");
   out.replaceChildren();
-  const selected = state.entries.filter(entry=>entry.date===$("day").value && !entry.cancelled);
+  const date=$("day").value;
+  const selected=state.entries.filter(entry=>entry.date===date&&!entry.cancelled);
   const issues=new Set(), totals=new Map(), customers=new Map(), comparisons=[], pendingTypes=new Set();
   const draws=Object.fromEntries(gameKeys.map(game=>[game,drawFor(game)]));
   let partialCost=false, partialPrize=false;
   for (const entry of selected) {
-    const person = customers.get(entry.customer) || {prize:0,partial:false};
+    const person=customers.get(entry.customer)??{prize:0,partial:false};
     customers.set(entry.customer,person);
-    const {rows,errors}=parseOrders(entry.raw,entry.defaultGame,entry.paperNotation);
-    for (const error of errors) issues.add(entry.customer+"｜"+error);
-    if (errors.length) { partialCost=true; partialPrize=true; person.partial=true; pendingTypes.add(2); pendingTypes.add(3); }
-    for (const row of rows) {
+    const parsed=parseOrders(entry.raw,entry.defaultGame,entry.paperNotation,true);
+    for (const error of parsed.errors) issues.add(entry.customer+"｜"+error);
+    if (!parsed.rows.length || parsed.errors.length) {
+      if (!parsed.errors.length) issues.add(entry.customer+"｜牌單格式待核對");
+      partialCost=true; partialPrize=true; person.partial=true;
+      for (const type of [1,2,3]) pendingTypes.add(type);
+    }
+    for (const row of parsed.rows) {
       const draw=draws[row.game];
       const {card,stars}=comparisonCard(entry.customer,row,draw);
       comparisons.push(card);
       for (const [kind,weight] of Object.entries(row.values)) {
         const type=Number(kind), key=row.game+"-"+type;
         try {
-          const result=calcLine(row,type,weight,draw.values);
-          const agg=totals.get(key) || {type,game:row.game,units:0,winUnits:0};
-          agg.units=rounded(agg.units + result.units);
-          agg.winUnits=rounded(agg.winUnits + result.winUnits);
+          const rate=rateFor(row.game,type), matched=matchStatus(draw,rate.hit);
+          const result=calcLine(row,type,weight,matched.values);
+          const agg=totals.get(key)??{type,game:row.game,rate,matched,units:0,winUnits:0,shares:0,winShares:0,priced:0,winPriced:0};
+          const normalize=type===1?precise:rounded;
+          agg.units=normalize(agg.units+result.units);
+          agg.winUnits=normalize(agg.winUnits+result.winUnits);
+          if (type===1) {
+            agg.shares=result.shares===null?null:precise(agg.shares+result.shares);
+            agg.winShares=result.winShares===null?null:precise(agg.winShares+result.winShares);
+            if (result.shares===null) pendingTypes.add(type);
+          }
+          const priceUnits=pricingQuantity(result,type,rate.unit);
+          const winPriceUnits=pricingQuantity(result,type,rate.unit,true);
+          agg.priced=priceUnits===null?null:normalize(agg.priced+priceUnits);
+          agg.winPriced=winPriceUnits===null?null:normalize(agg.winPriced+winPriceUnits);
           totals.set(key,agg);
-          const prize=perHitPrize(key), cost=nonnegative("cost-"+key);
-          if (cost===null) { issues.add(games[row.game]+" "+types[type]+" 待填成本"); partialCost=true; }
-          if (!draw.values) { issues.add(games[row.game]+"｜"+draw.issue); partialPrize=true; person.partial=true; }
-          if (result.winUnits && prize===null) { issues.add(games[row.game]+" "+types[type]+" 待填賠率"); partialPrize=true; person.partial=true; }
-          if (prize!==null) person.prize=rounded(person.prize+result.winUnits*prize);
-          comparisonLine(stars,type,result,draw,prize);
+          const label=games[row.game]+"｜"+types[type]+"｜";
+          if (rate.cost===null || priceUnits===null) {
+            issues.add(label+(priceUnits===null?"計價單位或換算支數待設定":"單位成本待設定")); partialCost=true;
+          }
+          const payout=rate.prize===null||winPriceUnits===null||rate.hit==="pending"?null:normalize(winPriceUnits*rate.prize);
+          if (!matched.values || (payout===null && (type!==5||result.win.length))) {
+            partialPrize=true; person.partial=true;
+            if (!matched.values) issues.add(label+matched.issue);
+            if (payout===null && rate.hit!=="pending") issues.add(label+"賠付基數、賠率或計價單位待設定");
+          }
+          if (payout!==null) person.prize=rounded(person.prize+payout);
+          comparisonLine(stars,row,type,weight,result,matched,payout);
         } catch (error) {
           issues.add(entry.customer+"｜"+row.original+" "+types[type]+"｜"+error.message);
-          stars.append(node("li",types[type]+"｜"+error.message,"issue"));
+          stars.append(node("li",orderPlay(row,type)+"｜"+orderQuantity(type,weight,null,row.written[type])+"｜"+error.message,"issue"));
           pendingTypes.add(type);
           partialCost=true; partialPrize=true; person.partial=true;
         }
       }
     }
   }
-  const costsByType = {};
+  const costsByType={};
   let prizeSum=0;
   const summary=[], unitsByType={};
-  for (const [key,total] of totals) {
-    const c=nonnegative("cost-"+key), p=perHitPrize(key);
-    const cost=rounded(total.units*(c||0)), prize=rounded(total.winUnits*(p||0));
-    const unit=" "+unitName(total.type);
-    unitsByType[total.type]=rounded((unitsByType[total.type]||0)+total.units);
-    costsByType[total.type]=rounded((costsByType[total.type]||0)+cost);
-    prizeSum=rounded(prizeSum+prize);
-    summary.push([games[total.game],types[total.type],fmt(total.units)+unit,c===null?"待填":fmt(cost),
-      draws[total.game].values?fmt(total.winUnits)+unit:"待開獎",
-      !draws[total.game].values || (total.winUnits && p===null)?"待核對":fmt(prize)]);
+  for (const total of totals.values()) {
+    const {type,rate,matched}=total;
+    const cost=rate.cost===null||total.priced===null?null:rounded(total.priced*rate.cost);
+    const payout=type===5&&total.winPriced===0?0:
+      rate.prize===null||total.winPriced===null?null:(type===1?precise:rounded)(total.winPriced*rate.prize);
+    unitsByType[type]=type===1?precise((unitsByType[type]??0)+(total.shares??0)):rounded((unitsByType[type]??0)+total.units);
+    costsByType[type]=rounded((costsByType[type]??0)+(cost??0));
+    prizeSum=rounded(prizeSum+(payout??0));
+    summary.push([games[total.game],types[type],measuredOrder(type,total.units,total.shares),cost===null?"待設定":fmt(cost),
+      matched.values?measuredOrder(type,total.winUnits,total.winShares):matched.issue,
+      payout===null||rate.hit==="pending"?"待設定":matched.values?fmt(payout):"待核對"]);
   }
-  const amounts=Object.values(costsByType);
-  const costSum=$("rounding").value==="total" ? Math.round(rounded(amounts.reduce((a,b)=>a+b,0))) : amounts.reduce((a,b)=>a+Math.round(b),0);
-  const manualCost=nonnegative("manualCost"), manualPrize=nonnegative("manualPrize");
+  const costs=Object.values(costsByType);
+  const costSum=$("rounding").value==="total"?Math.round(rounded(costs.reduce((a,b)=>a+b,0))):costs.reduce((a,b)=>a+Math.round(b),0);
   const hasOrders=selected.length>0;
-  const cost=manualCost ?? (hasOrders && !partialCost ? costSum : null);
-  const prize=manualPrize ?? (hasOrders && !partialPrize ? rounded(prizeSum) : null);
-  const balance=cost===null || prize===null ? null : rounded(cost-prize);
+  const canReplaceEmpty=!!state.ledger[date]&&(state.daily[date]?.ordersDeleted||state.entries.some(entry=>entry.date===date));
+  const shouldCalculate=hasOrders||canReplaceEmpty;
+  const cost=nonnegative("manualCost")??(shouldCalculate&&!partialCost?costSum:null);
+  const prize=nonnegative("manualPrize")??(shouldCalculate&&!partialPrize?prizeSum:null);
+  const balance=cost===null||prize===null?null:rounded(cost-prize);
   currentDay={cost,prize,balance,two:pendingTypes.has(2)?null:unitsByType[2]??0,three:pendingTypes.has(3)?null:unitsByType[3]??0};
   renderAccounts();
   renderDailyUnits(unitsByType,pendingTypes);
   out.append(node("h3","逐筆對獎｜客人下單與當日開獎","spaced"));
-  if (comparisons.length) out.append(node("p","底色標出與開獎相符的號碼。每個星別下方列出實際中獎的組合。","hint"),...comparisons);
-  else out.append(node("p",hasOrders?"牌單格式待核對，確認後會在這裡顯示對獎結果。":"加入牌單後，這裡會列出每位客人的下單號碼。","hint"));
+  if (comparisons.length) out.append(node("p","底色標出與主號相符的號碼。各玩法下方列出依命中規則算出的組合。","hint"),...comparisons);
+  else out.append(node("p",hasOrders?"牌單格式待核對。":"加入牌單後，這裡會列出每位客人的下單號碼。","hint"));
   if (issues.size) {
     const list=node("ul",undefined,"issue");
     for (const issue of issues) list.append(node("li",issue));
-    out.append(node("h3","待核對", "spaced"),list);
+    out.append(node("h3","待核對","spaced"),list);
   }
-  if (summary.length) out.append(node("h3","依彩種與玩法","spaced"),summaryTable(["彩種","玩法","總量","成本（元，取整前）","命中量","中獎（元）"],summary));
-  if (customers.size) out.append(node("h3","依客人","spaced"),summaryTable(["客人","中獎（元）"],[...customers].map(([name,val])=>[name,val.partial?"已算 "+fmt(val.prize)+"，有待核對":fmt(val.prize)])));
+  if (summary.length) out.append(node("h3","依彩種與玩法","spaced"),summaryTable(["彩種","玩法","總下單量","成本（元，取整前）","命中量","中獎（元）"],summary));
+  if (customers.size) out.append(node("h3","依客人","spaced"),summaryTable(["客人","中獎（元）"],
+    [...customers].map(([name,val])=>[name,val.partial?"已算 "+fmt(val.prize)+"，有待核對":fmt(val.prize)])));
 }
-function render() { renderEntries(); renderResults(); renderLedger(); previewOrder(); }
-createRates();
+function render() { renderEntries(); renderResults(); renderLedger(); previewOrder(); previewPaste(); }
 $("day").value=localDay();
-const dailyFields=["draw539","drawlotto","drawdaily","manualCost","manualPrize"];
-const ruleFields={"tails":"tail_mode","rounding":"rounding_mode","dailyMax":"daily_max","dailyCount":"daily_count"};
-const rateFields={"cost":"unit_cost","base":"payout_base","prize":"payout_multiplier"};
+
+const ruleFields={"tails":"tail_mode","rounding":"rounding_mode"};
+const rateFields={"cost":"unit_cost","base":"payout_base","prize":"payout_multiplier","unit":"pricing_unit","hit":"hit_rule"};
 const overrideFields={manualCost:"manual_cost",manualPrize:"manual_prize"};
 let currentDay={cost:null,prize:null,balance:null};
 let editing=null, lastDay=$("day").value;
@@ -978,12 +1318,14 @@ function resetEdit() {
   editing=null;
   $("add").textContent="加入文字牌單";
   $("cancelEdit").hidden=true;
+  syncOrderGameOptions();
 }
 $("cancelEdit").addEventListener("click",()=>{
-  resetEdit(); $("orders").value=""; $("message").textContent="已取消修改。";
+  resetEdit(); $("orders").value=""; $("message").textContent="已取消修改。"; render();
 });
 function applyDay() {
-  for (const id of dailyFields) if (!changedDayInputs.has(id)) $(id).value=state.daily[$("day").value]?.[id]??"";
+  for (const id of dayFieldIds()) if (!changedDayInputs.has(id)) $(id).value=state.daily[$("day").value]?.[id]??"";
+  syncDrawVisibility();
 }
 $("day").addEventListener("change",()=>{
   if (lastDay===$("day").value) return;
@@ -998,37 +1340,45 @@ $("day").addEventListener("change",()=>{
   for (const id of ["accountMessage","ledgerMessage","message","dayInputsMessage"]) $(id).textContent="";
   render();
 });
-for (const id of fieldIds.filter(id=>id!=="day")) $(id).addEventListener("input",()=>{
-  const target=dailyFields.includes(id)?changedDayInputs:changedSettings;
-  target.add(id);
-  $(dailyFields.includes(id)?"dayInputsMessage":"settingsMessage").textContent="有未儲存的修改。";
-  renderResults(); previewOrder();
-});
+function markDayInput(event) {
+  changedDayInputs.add(event.target.id);
+  $("dayInputsMessage").textContent="有未儲存的修改。";
+  renderResults();
+}
+$("drawFields").addEventListener("input",markDayInput);
+for (const id of manualIds) $(id).addEventListener("input",markDayInput);
+function markSetting(event) {
+  changedSettings.add(event.target.id);
+  $("settingsMessage").textContent="有未儲存的修改。";
+  renderResults(); previewOrder(); previewPaste();
+}
+$("rates").addEventListener("input",markSetting);
+for (const id of ruleIds) $(id).addEventListener("input",markSetting);
+function pastedOrder() {
+  return {date:$("day").value,raw:$("orders").value.trim(),defaultGame:$("defaultGame").value,
+    paperNotation:$("paperNotation").checked,customer:$("customer").value.trim()||"未指定客人"};
+}
+function previewPaste() {
+  const box=$("pastePreview"), entry=pastedOrder();
+  box.replaceChildren(); box.hidden=!entry.raw;
+  if (entry.raw) appendOrderSummary(box,validateNewOrder(entry));
+}
+$("orders").addEventListener("input",previewPaste);
+$("paperNotation").addEventListener("change",previewPaste);
 $("add").addEventListener("click",()=>{
-  const date=$("day").value, raw=$("orders").value.trim(), defaultGame=$("defaultGame").value;
-  if (!date || !raw) { $("message").textContent="請先填日期和牌單內容。"; return; }
-  const entry={date,raw,defaultGame,paperNotation:$("paperNotation").checked,customer:$("customer").value.trim()||"未指定客人"};
-  const {rows,errors}=parseOrders(raw,defaultGame,entry.paperNotation);
+  const entry=pastedOrder();
+  if (!entry.date || !entry.raw || !entry.defaultGame) {
+    $("message").textContent="請先填日期、彩種和牌單內容。"; return;
+  }
+  const {rows,errors}=validateNewOrder(entry);
   const previous=editing;
+  if (!unchangedOrder(entry)&&(errors.length||!rows.length)) {
+    $("message").textContent=errors[0]??"未辨識到下單內容，請核對牌單。"; return;
+  }
   runWrite("message",async workspace=>{
     await putCloudOrder(workspace,entry,previous);
-    resetEdit(); $("orders").value="";
-    $("message").textContent="已儲存 "+rows.length+" 筆牌單"+(errors.length?"，有 "+errors.length+" 處格式待核對。":"。");
-  });
-});
-let photoUrls=[];
-$("photos").addEventListener("change",()=>{
-  photoUrls.forEach(url=>URL.revokeObjectURL(url));
-  photoUrls=[];
-  $("photoList").replaceChildren();
-  [...$("photos").files].forEach((file,index)=>{
-    const figure=node("figure",undefined,"photo-thumb");
-    const img=node("img");
-    img.alt="照片 "+(index+1)+" 原圖";
-    img.src=URL.createObjectURL(file);
-    photoUrls.push(img.src);
-    figure.append(img,node("figcaption","照片 "+(index+1)+"｜"+file.name));
-    $("photoList").append(figure);
+    resetEdit(); $("orders").value=""; previewPaste();
+    $("message").textContent="已儲存牌單（"+rows.length+" 組下單）。";
   });
 });
 function downloadBackup(data,filename) {
@@ -1057,7 +1407,7 @@ function openView(view) {
 for (const button of document.querySelectorAll("nav [data-view]")) button.addEventListener("click",()=>openView(button.dataset.view));
 $("toOrders").addEventListener("click",()=>openView("orders"));
 function showRateGame() {
-  for (const game of gameKeys) $("rate-grid-"+game).hidden=game!==$("rateGame").value;
+  for (const group of $("rates").children) group.hidden=group.dataset.game!==$("rateGame").value;
 }
 $("rateGame").addEventListener("change",showRateGame);
 $("saveRates").addEventListener("click",()=>runWrite("settingsMessage",saveCloudSettings));
@@ -1100,19 +1450,18 @@ for (const button of document.querySelectorAll("[data-order-view]")) button.addE
 const directHelp={
   full:"號碼只填一格。例：01、02、03 做二星，有 3 碰。",
   column:"同一柱的號碼填在同一格。例：第一柱 01、02，第二柱 03、04，二星有 4 碰。",
-  car:"這一筆填一組號碼和整組車數。",
   single:"填一組號碼。例：01、02 各 0.2 車，車數填 0.2，這筆合計 0.4 車。"
 };
-function carMode(mode) { return mode==="car"||mode==="single"; }
+function carMode(mode) { return mode==="single"; }
 function showQuickMode() {
   const mode=$("orderMode").value;
-  $("orderHelp").textContent=directHelp[mode];
+  $("orderHelp").textContent=directHelp[mode]??"請先啟用彩種及玩法。";
   $("starInputs").hidden=carMode(mode);
   $("carInput").hidden=!carMode(mode);
   $("columnGroup").hidden=mode!=="column";
   $("singleGroup").hidden=mode==="column";
   $("quantityTitle").textContent=carMode(mode)?"填下單車數":"填下單支數";
-  $("carLabel").textContent=mode==="single"?"每個號碼下幾車":"這一組下幾車";
+  $("carLabel").textContent="每個號碼下幾車";
   previewOrder();
 }
 function labelColumns() {
@@ -1146,7 +1495,7 @@ function directNumbers(mode) {
   return {raw:raw.join(" 碰 "),groups:raw.map(groupTokens)};
 }
 function directValues(mode) {
-  const fields=carMode(mode)?[[mode==="car"?5:1,"quickCar"]]:[2,3,4].map(k=>[k,"quickStar"+k]);
+  const fields=carMode(mode)?[[1,"quickCar"]]:[2,3,4].filter(k=>config($("defaultGame").value)?.plays.includes(k)).map(k=>[k,"quickStar"+k]);
   return fields.filter(([,id])=>$(id).value!==""||$(id).validity.badInput).map(([kind,id])=>{
     const amount=nonnegative(id);
     if (!amount) throw Error(types[kind]+"請填大於 0 的數量，沒下可留空。");
@@ -1158,19 +1507,19 @@ function previewOrder() {
   box.replaceChildren(); box.hidden=true;
   try {
     const numbers=directNumbers(mode);
-    if (!numbers) return;
+    if (!numbers || !mode) return;
     const row={groups:numbers.groups,game:$("defaultGame").value};
     const values=directValues(mode);
     if (carMode(mode)) {
       if (!values.length) return;
       const [type,weight]=values[0], result=calcLine(row,type,weight,null);
-      box.append(node("p",types[type]+"合計 "+fmt(result.units)+" 車"));
+      box.append(node("p",types[type]+"｜"+orderQuantity(type,weight,result)));
     } else {
       const expanded=expandGroups(row.groups,row.game);
       if (mode==="column" && new Set(expanded.flat()).size!==expanded.flat().length) throw Error("不同柱有相同號碼，請確認各柱。");
       const sizes=mode==="column"?expanded.map(group=>group.length):expanded[0].map(()=>1);
       const weights=new Map(values);
-      const rows=[2,3,4].map(type=>{
+      const rows=[2,3,4].filter(type=>config(row.game).plays.includes(type)).map(type=>{
         const weight=weights.get(type);
         const count=countGroups(sizes,type);
         if (weight && !count) throw Error(types[type]+"的號碼或柱數不足。");
@@ -1186,21 +1535,21 @@ function previewOrder() {
 }
 $("addColumn").addEventListener("click",()=>addOrderColumn(true));
 $("orderMode").addEventListener("change",showQuickMode);
-$("defaultGame").addEventListener("change",previewOrder);
+$("defaultGame").addEventListener("change",()=>{syncOrderModes(); previewPaste();});
 for (const id of ["quickNumbers","quickStar2","quickStar3","quickStar4","quickCar"]) $(id).addEventListener("input",previewOrder);
 $("quickAdd").addEventListener("click",async()=>{
   const date=$("day").value, defaultGame=$("defaultGame").value, mode=$("orderMode").value;
   try {
     if (!date) throw Error("請先選帳務日期。");
+    if (!config(defaultGame)?.enabled || !mode) throw Error("請選擇已啟用的彩種及玩法。");
     const numbers=directNumbers(mode);
     if (!numbers) throw Error("請先輸入客人的號碼。");
     let raw=numbers.raw;
     const values=directValues(mode);
     if (!values.length) throw Error(carMode(mode)?"請填車數。":"請在有下單的星別填上支數。");
     for(const [type,weight] of values) calcLine({groups:numbers.groups,game:defaultGame},type,weight,null);
-    if (mode==="car") raw+=" 全車"+values[0][1];
-    else if (mode==="single") raw+=" 各"+values[0][1]+"車";
-    else raw+="\n"+values.map(([k,value])=>types[k]+"×"+value).join("\n");
+    if (mode==="single") raw+=" 各"+fmtCar(values[0][1]).replaceAll(",","")+"車";
+    else raw+="\n"+values.map(([k,value])=>types[k]+"×"+fmtCar(value).replaceAll(",","")).join("\n");
     const parsed=parseOrders(raw,defaultGame);
     if (parsed.errors.length || parsed.rows.length!==1) throw Error("請確認號碼與玩法格式。");
     const entry={date,raw,defaultGame,customer:$("customer").value.trim()||"未指定客人",paperNotation:false};
@@ -1221,14 +1570,14 @@ function ledgerRows() {
   let balance=0;
   const rows=[];
   for (const [date,entry] of Object.entries(state.ledger).sort(([left],[right])=>left.localeCompare(right))) {
-    const net=money(entry.cost-entry.prize), before=balance;
-    balance=money(balance+net);
+    const net=rounded(entry.cost-entry.prize), before=balance;
+    balance=rounded(balance+net);
     const available=balance;
     const writeoffs=entry.writeoffs||[];
     let invalid=false;
     for (const record of writeoffs) {
       if (balance<threshold || record.amount>balance) invalid=true;
-      balance=money(balance-record.amount);
+      balance=rounded(balance-record.amount);
     }
     const off=money(available-balance);
     rows.push({date,entry,before,net,available,off,after:balance,invalid});
@@ -1236,7 +1585,7 @@ function ledgerRows() {
   return rows;
 }
 const money = value => Math.round(rounded(value)*100)/100;
-const moneyLabel = value => value===null?"待核對":fmt(value)+" 元";
+const moneyLabel = value => value===null?"待核對":fmtTotal(value)+" 元";
 function stat(cards,title,value,featured=false) {
   const box=node("div",undefined,featured?"heroStat":"");
   box.append(node("span",title),node("strong",moneyLabel(value),value<0?"bad":""));
@@ -1253,7 +1602,7 @@ function renderAccounts() {
   stat(panel,"中獎總額",currentDay.prize);
   stat(panel,"本日盈虧",currentDay.balance);
   stat(panel,"前期結餘",before);
-  stat(panel,"銷帳後累計淨利",currentDay.balance===null?null:money(before+currentDay.balance-recordedOff),true);
+  stat(panel,"銷帳後累計淨利",currentDay.balance===null?null:rounded(before+currentDay.balance-recordedOff),true);
   const note=$("recordedNet");
   note.hidden=!posted||currentDay.cost===posted.cost&&currentDay.prize===posted.prize;
   if (posted) note.textContent="流水帳已存成本 "+fmt(posted.cost)+" 元、中獎 "+fmt(posted.prize)+" 元。上方試算有變動時，按「更新本日結算」才會改帳。";
@@ -1266,12 +1615,21 @@ function renderLedger() {
   const selected=rows.find(row=>row.date===$("day").value);
   $("writeOff").disabled=!selected||selected.after<threshold;
   if (!rows.length) { out.append(node("p","儲存第一筆日結後，流水帳會從該日開始累計。","hint")); return; }
-  if (selected) out.append(node("p",selected.after>=threshold?"選定日期可銷帳，結餘 "+fmt(selected.after)+" 元。":"選定日期距銷帳門檻還差 "+fmt(money(threshold-selected.after))+" 元。","note"));
+  if (selected) out.append(node("p",selected.after>=threshold?"選定日期可銷帳，結餘 "+fmtTotal(selected.after)+" 元。":"選定日期距銷帳門檻還差 "+fmtTotal(threshold-selected.after)+" 元。","note"));
   const formatted=rows.map(row=>{
     const pick=node("button",row.date,"secondary");
     pick.addEventListener("click",()=>{ $("day").value=row.date; $("day").dispatchEvent(new Event("change")); openView("today"); });
     const notes=(row.entry.writeoffs||[]).map(event=>event.note).filter(Boolean).join("／");
-    return [pick,fmt(row.before),fmt(row.entry.cost),fmt(row.entry.prize),fmt(row.net),fmt(row.off)+(notes?" · "+notes:""),fmt(row.after),row.after>=threshold?"可銷帳":"累計中"];
+    const dateCell=node("div");
+    const exact=node("details");
+    exact.append(node("summary","查看原始金額"));
+    const values=[
+      ["前期結餘",row.before],["成本",row.entry.cost],["中獎",row.entry.prize],
+      ["本日盈虧",row.net],["銷帳",row.off],["期末結餘",row.after]
+    ];
+    for (const [label,value] of values) exact.append(node("div",label+" "+fmt(value)+" 元"));
+    dateCell.append(pick,exact);
+    return [dateCell,fmtTotal(row.before),fmtTotal(row.entry.cost),fmtTotal(row.entry.prize),fmtTotal(row.net),fmt(row.off)+(notes?" · "+notes:""),fmtTotal(row.after),row.after>=threshold?"可銷帳":"累計中"];
   });
   const drafts=[...new Set(state.entries.filter(entry=>!entry.cancelled&&!state.ledger[entry.date]).map(entry=>entry.date))].sort();
   if (drafts.length) out.append(node("p","尚未儲存日結："+drafts.join("、"),"hint"));
@@ -1324,8 +1682,13 @@ async function readAll(table,workspace,sort) {
   }
 }
 function asField(value) { return value===null||value===undefined?"":String(value); }
-function bookState(settings,rates,draws,orders,inputs,settlements,writeoffs) {
+function bookState(settings,rates,draws,orders,inputs,settlements,writeoffs,gameSettings) {
   const next=emptyBook();
+  next.legacyDaily={min:1,limit:settings?.daily_max??null,count:settings?.daily_count??null};
+  next.catalog=Object.fromEntries(gameSettings.map(row=>[row.game,{
+    title:row.title,aliases:row.aliases,min:row.min_number,limit:row.max_number,count:row.draw_count,
+    shares:row.shares_per_car,special:row.special_enabled,plays:row.play_types,enabled:row.enabled,revision:row.revision
+  }]));
   for (const [id,column] of Object.entries(ruleFields)) next.fields[id]=asField(settings?.[column]);
   next.fields.rounding ||= "star";
   for (const rate of rates) for (const [label,column] of Object.entries(rateFields)) {
@@ -1333,14 +1696,16 @@ function bookState(settings,rates,draws,orders,inputs,settlements,writeoffs) {
   }
   for (const draw of draws) {
     const row=next.daily[draw.business_date]??={};
-    row["draw"+draw.game]=draw.numbers.map(number=>String(number).padStart(2,"0")).join(".");
+    row["draw"+draw.game]=draw.numbers.map(displayNumber).join(".");
+    row["special"+draw.game]=draw.special_number==null?"":displayNumber(draw.special_number);
   }
   for (const input of inputs) {
     const row=next.daily[input.business_date]??={};
     for (const [id,column] of Object.entries(overrideFields)) row[id]=asField(input[column]);
+    row.ordersDeleted=input.orders_deleted===true;
   }
   next.entries=orders.map(row=>({id:row.id,date:row.business_date,customer:row.customer_name,defaultGame:row.default_game,
-    raw:row.raw_text,paperNotation:row.paper_notation,cancelled:row.cancelled}));
+    raw:row.raw_text,paperNotation:row.paper_notation,cancelled:row.cancelled,revision:row.revision}));
   for (const row of settlements) next.ledger[row.business_date]={
     cost:Number(row.cost),prize:Number(row.prize),two:row.two_star_units,three:row.three_star_units,postedAt:row.posted_at,writeoffs:[]
   };
@@ -1349,23 +1714,22 @@ function bookState(settings,rates,draws,orders,inputs,settlements,writeoffs) {
 }
 async function loadBook(workspace) {
   const revision=authRevision;
-  const [settings,rates,draws,orders,inputs,settlements,writeoffs]=await Promise.all([
+  const [settings,rates,draws,orders,inputs,settlements,writeoffs,gameSettings]=await Promise.all([
     response(db.from("paidan_settings").select("*").eq("owner_id",workspace).maybeSingle()),
     readAll("paidan_rates",workspace,["game","play_type"]),
     readAll("paidan_draws",workspace,["business_date","game"]),
     readAll("paidan_orders",workspace,["created_at","id"]),
     readAll("paidan_day_inputs",workspace,["business_date"]),
     readAll("paidan_settlements",workspace,["business_date"]),
-    readAll("paidan_writeoffs",workspace,["business_date","event_no"])
+    readAll("paidan_writeoffs",workspace,["business_date","event_no"]),
+    readAll("paidan_game_settings",workspace,["game"])
   ]);
   if (revision!==authRevision||workspace!==activeWorkspace) return false;
   if (!settings) throw Error("這本帳目前無法讀取。請確認你仍是共用成員。");
-  state=bookState(settings,rates,draws,orders,inputs,settlements,writeoffs);
+  state=bookState(settings,rates,draws,orders,inputs,settlements,writeoffs,gameSettings);
+  syncCatalog();
   applyDay();
-  for (const id of fieldIds) {
-    if (id==="day"||dailyFields.includes(id)||changedSettings.has(id)) continue;
-    $(id).value=state.fields[id]??"";
-  }
+  applySettings();
   render();
   return true;
 }
@@ -1417,8 +1781,8 @@ function clearBookDrafts() {
   resetEdit();
   for (const id of ["orders","customer","quickNumbers","quickStar2","quickStar3","quickStar4","quickCar","writeNote"]) $(id).value="";
   for (const field of $("orderColumns").querySelectorAll("input")) field.value="";
-  $("photos").value="";
-  $("photos").dispatchEvent(new Event("change"));
+  $("gameDialog").close();
+  syncCatalog(true);
   for (const id of ["message","accountMessage","ledgerMessage","settingsMessage","dayInputsMessage","permissionMessage","backupStatus"]) $(id).textContent="";
 }
 function workspaceName(row) { return row.is_manager?"我管理的帳本":"共用帳本 "+row.workspace_id.slice(0,8); }
@@ -1645,9 +2009,7 @@ function clearPendingId(kind,fingerprint) {
 }
 async function editCloudOrder(workspace,old,patch) {
   const data=await response(db.from("paidan_orders").update(patch)
-    .eq("owner_id",workspace).eq("id",old.id).eq("raw_text",old.raw)
-    .eq("customer_name",old.customer).eq("default_game",old.defaultGame)
-    .eq("paper_notation",old.paperNotation).eq("cancelled",old.cancelled).select("id"));
+    .eq("owner_id",workspace).eq("id",old.id).eq("revision",old.revision).select("id"));
   if (!data.length) throw Error("這筆牌單已被其他成員變更。請取消修改後重新開啟這筆。");
 }
 async function putCloudOrder(workspace,entry,old) {
@@ -1658,27 +2020,49 @@ async function putCloudOrder(workspace,entry,old) {
   await response(db.from("paidan_orders").upsert({...fields,id,owner_id:workspace},{onConflict:"id",ignoreDuplicates:true}));
   clearPendingId("order",fingerprint);
 }
+async function deleteCloudOrder(workspace,old) {
+  const deleted=await response(db.from("paidan_orders").delete()
+    .eq("owner_id",workspace).eq("id",old.id).eq("revision",old.revision).select("id"));
+  if (!deleted.length) throw Error("牌單可能已被其他成員變更或刪除。請同步後重新核對。");
+}
 async function saveCloudDay(workspace) {
   const date=$("day").value;
   if (!date) throw Error("請先選擇帳務日期。");
-  const draws=[], override={};
+  const override={}, changedGames=new Set();
   for (const id of changedDayInputs) {
-    if (id.startsWith("draw")) {
-      const game=id.slice(4), parsed=drawFor(game);
-      if ($(id).value.trim()&&!parsed.values) throw Error(games[game]+"｜"+parsed.issue);
-      draws.push([id,game,parsed.values]);
-    } else {
+    if (id in overrideFields) {
       if ($(id).value!==""&&nonnegative(id)===null) throw Error("補登金額請填有效數字。");
       override[overrideFields[id]]=nonnegative(id);
-    }
+    } else changedGames.add(id.startsWith("draw")?id.slice(4):id.slice(7));
   }
-  for (const [id,game,values] of draws) {
-    if (values) await response(db.from("paidan_draws").upsert({owner_id:workspace,business_date:date,game,numbers:values},{onConflict:"owner_id,business_date,game"}));
-    else await response(db.from("paidan_draws").delete().eq("owner_id",workspace).eq("business_date",date).eq("game",game));
-    changedDayInputs.delete(id);
+  const draws=[];
+  for (const game of changedGames) {
+    const parsed=drawFor(game);
+    const remove=!$(drawId(game)).value.trim();
+    if ((!remove&&!parsed.values)||parsed.specialInvalid) throw Error(games[game]+"｜"+parsed.issue);
+    if (remove&&changedDayInputs.has(specialId(game))&&$(specialId(game)).value.trim()) throw Error(games[game]+"｜請先輸入開獎主號。");
+    draws.push([game,remove?null:parsed]);
+  }
+  for (const [game,draw] of draws) {
+    const key={owner_id:workspace,business_date:date,game};
+    const previous=state.daily[date];
+    const savedMain=previous?.[drawId(game)];
+    const values=draw?{numbers:draw.values,special_number:draw.special}:null;
+    if (savedMain) {
+      const table=db.from("paidan_draws");
+      let query=(values?table.update(values):table.delete()).match(key)
+        .eq("numbers","{"+readNumbers(savedMain).join(",")+"}");
+      const oldSpecial=previous[specialId(game)];
+      query=oldSpecial?query.eq("special_number",Number(oldSpecial)):query.is("special_number",null);
+      const rows=await response(query.select("game"));
+      if (!rows.length) throw Error(games[game]+"｜開獎資料已有變動，請重新核對。");
+    } else if (values) await response(db.from("paidan_draws").insert({...key,...values}));
+    changedDayInputs.delete(drawId(game));
+    changedDayInputs.delete(specialId(game));
   }
   if (Object.keys(override).length) {
-    await response(db.from("paidan_day_inputs").upsert({owner_id:workspace,business_date:date,...override},{onConflict:"owner_id,business_date",defaultToNull:false}));
+    await response(db.from("paidan_day_inputs").upsert({owner_id:workspace,business_date:date,...override},
+      {onConflict:"owner_id,business_date",defaultToNull:false}));
     for (const id of Object.keys(overrideFields)) changedDayInputs.delete(id);
   }
   $("dayInputsMessage").textContent="已儲存開獎與補登。";
@@ -1687,28 +2071,34 @@ $("saveDayInputs").addEventListener("click",()=>runWrite("dayInputsMessage",save
 async function saveCloudSettings(workspace) {
   const rules={}, patches=new Map();
   for (const id of changedSettings) {
-    if (id==="tails"||id==="rounding") { rules[ruleFields[id]]=$(id).value||null; continue; }
-    const value=nonnegative(id);
-    if ($(id).validity.badInput||($(id).value!==""&&value===null)) throw Error("請確認費率及開獎設定的數字。");
-    if (id in ruleFields) { rules[ruleFields[id]]=value; continue; }
+    if (id in ruleFields) { rules[ruleFields[id]]=$(id).value||null; continue; }
     const [label,game,type]=id.split("-");
+    const choice=label==="unit"||label==="hit";
+    const value=choice?$(id).value:nonnegative(id);
+    if ($(id).validity.badInput||($(id).value!==""&&value===null)) throw Error("請確認費率的數字。");
+    if (label==="hit"&&value==="with_special"&&!config(game).special) throw Error("請先在彩種設定開啟特別號。");
     const key=game+"-"+type;
-    if (!patches.has(key)) patches.set(key,{game,type,values:{},keys:[]});
+    if (!patches.has(key)) patches.set(key,{game,play_type:Number(type),keys:[],fields:{}});
     const patch=patches.get(key);
-    patch.values[rateFields[label]]=value; patch.keys.push(id);
+    patch.fields[rateFields[label]]=value;
+    patch.keys.push(id);
   }
   if (Object.keys(rules).length) {
-    await response(db.from("paidan_settings").update(rules).eq("owner_id",workspace));
+    const rows=await response(db.from("paidan_settings").update(rules).eq("owner_id",workspace).select("owner_id"));
+    if (!rows.length) throw Error("無法更新帳本設定，請同步後重試。");
     for (const [id,column] of Object.entries(ruleFields)) if (column in rules) changedSettings.delete(id);
   }
-  for (const {game,type,values,keys} of patches.values()) {
-    await response(db.from("paidan_rates").update(values).eq("owner_id",workspace).eq("game",game).eq("play_type",Number(type)));
+  for (const {game,play_type,keys,fields} of patches.values()) {
+    const row={owner_id:workspace,game,play_type};
+    await response(db.from("paidan_rates").upsert(row,{onConflict:"owner_id,game,play_type",ignoreDuplicates:true}));
+    const updated=await response(db.from("paidan_rates").update(fields).match(row).select("play_type"));
+    if (!updated.length) throw Error("無法更新費率，請同步後重試。");
     for (const id of keys) changedSettings.delete(id);
   }
   $("settingsMessage").textContent="設定已儲存到共用帳本。";
 }
 function settlementInput(date) {
-  return JSON.stringify([state.fields,state.daily[date]??{},state.entries.filter(entry=>entry.date===date),state.ledger[date]??null]);
+  return JSON.stringify([state.fields,state.catalog,state.legacyDaily,state.daily[date]??{},state.entries.filter(entry=>entry.date===date),state.ledger[date]??null]);
 }
 let editingAccountEmail=null;
 function openAccountDialog(account) {
@@ -1812,7 +2202,9 @@ $("accountForm").addEventListener("submit",async event=>{
   }
 });
 
-showRateGame();
+syncCatalog(true);
+applyDay();
+applySettings();
 addOrderColumn();
 addOrderColumn();
 showQuickMode();
