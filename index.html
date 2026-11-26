@@ -251,6 +251,12 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 <div id="view-ledger" hidden>
 <section class="panel"><h2>流水帳與銷帳</h2>
 <p class="hint">前期結餘加本日盈虧。累計淨利達 200,000 元可銷帳，未銷的金額繼續結轉。</p>
+<div class="order-step">
+  <h3>前期結餘</h3>
+  <p id="openingSummary" class="hint"></p>
+  <button id="editOpening" type="button" class="secondary" hidden>設定前期結餘</button>
+  <output id="openingStatus" aria-live="polite"></output>
+</div>
 <div id="ledger"></div>
 <div class="grid ledger-controls"><label>銷帳金額<input id="writeAmount" type="number" min="0.01" step="0.01" value="200000"></label><label>備註<input id="writeNote" maxlength="120" placeholder="選填"></label></div>
 <button id="writeOff">登記選定日期的銷帳</button>
@@ -294,6 +300,22 @@ main:has(> #loginPanel:not([hidden])){max-width:none;padding:0}
 </section></div>
 </div>
 </main>
+<dialog id="openingDialog" aria-labelledby="openingDialogTitle">
+<form id="openingForm">
+  <h2 id="openingDialogTitle">設定前期結餘</h2>
+  <fieldset id="openingFields">
+    <p class="hint">填入舊帳截至該日、扣掉已銷帳後的淨結餘。正數代表累積盈餘，虧損請填負數。</p>
+    <div class="grid">
+      <label>舊帳截止日期<input id="openingDate" type="date" required></label>
+      <label>前期結餘金額（元）<input id="openingAmount" type="number" min="-999999999999.99" max="999999999999.99" step="0.01" placeholder="例如 150000 或 -12000" required></label>
+    </div>
+    <p id="openingDateHint" class="hint"></p>
+    <label>備註<input id="openingNote" maxlength="120" placeholder="選填"></label>
+    <div class="actions"><button type="submit">儲存前期結餘</button><button type="button" id="cancelOpening" class="secondary">取消</button></div>
+  </fieldset>
+  <output id="openingFormMessage" aria-live="polite"></output>
+</form>
+</dialog>
 <dialog id="gameDialog" aria-labelledby="gameDialogTitle">
 <form id="gameForm">
   <h2 id="gameDialogTitle">新增彩種</h2>
@@ -1566,6 +1588,58 @@ $("quickAdd").addEventListener("click",async()=>{
     else $("quickNumbers").focus();
   } catch(error) { $("message").textContent=error.message; }
 });
+function openingEntry() {
+  return Object.entries(state.ledger).find(([,entry])=>entry.kind==="opening");
+}
+let openingRevision=null;
+$("editOpening").addEventListener("click",()=>{
+  if (!activeIsManager()) return;
+  const [date,entry]=openingEntry()??[];
+  const firstRecorded=Object.keys(state.ledger).filter(key=>key!==date).sort()[0];
+  const cutoff=$("openingDate");
+  let latestDate=localDay();
+  if (firstRecorded) {
+    const previousDay=new Date(firstRecorded+"T00:00:00Z");
+    previousDay.setUTCDate(previousDay.getUTCDate()-1);
+    latestDate=[latestDate,previousDay.toISOString().slice(0,10)].sort()[0];
+  }
+  $("openingForm").reset();
+  openingRevision=entry?.postedAt??null;
+  cutoff.max=latestDate;
+  cutoff.value=date??(firstRecorded?latestDate:"");
+  cutoff.readOnly=Boolean(entry?.writeoffs.length);
+  $("openingAmount").value=entry?money(entry.cost-entry.prize):"";
+  $("openingNote").value=entry?.note??"";
+  $("openingFormMessage").textContent="";
+  $("openingDateHint").textContent=cutoff.readOnly?"此日期已有銷帳紀錄，截止日期已鎖定。"
+    :firstRecorded?"帳本最早一筆日結或補登是 "+firstRecorded+"，舊帳截止日期須早於這一天。"
+    :"第一筆日結須晚於舊帳截止日期。";
+  $("openingDialog").showModal();
+});
+$("cancelOpening").addEventListener("click",()=>$("openingDialog").close());
+$("openingDialog").addEventListener("cancel",event=>{
+  if ($("openingFields").disabled) event.preventDefault();
+});
+$("openingForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const fields=$("openingFields");
+  if (fields.disabled) return;
+  const payload={
+    p_date:$("openingDate").value,p_kind:"opening",p_cost:null,p_prize:null,
+    p_balance:$("openingAmount").value,p_note:$("openingNote").value.trim(),
+    p_expected_posted_at:openingRevision
+  };
+  fields.disabled=true;
+  try {
+    const saved=await runWrite("openingFormMessage",workspace=>response(db.rpc("paidan_save_ledger_history",{
+      p_workspace_id:workspace,...payload
+    })));
+    if (saved) {
+      $("openingDialog").close();
+      $("openingStatus").textContent="前期結餘已儲存。";
+    }
+  } finally { fields.disabled=false; }
+});
 function ledgerRows() {
   let balance=0;
   const rows=[];
@@ -1604,34 +1678,58 @@ function renderAccounts() {
   stat(panel,"前期結餘",before);
   stat(panel,"銷帳後累計淨利",currentDay.balance===null?null:rounded(before+currentDay.balance-recordedOff),true);
   const note=$("recordedNet");
-  note.hidden=!posted||currentDay.cost===posted.cost&&currentDay.prize===posted.prize;
-  if (posted) note.textContent="流水帳已存成本 "+fmt(posted.cost)+" 元、中獎 "+fmt(posted.prize)+" 元。上方試算有變動時，按「更新本日結算」才會改帳。";
-  $("postDay").textContent=posted?"更新本日結算":"儲存本日結算";
-  $("postDay").disabled=!date||currentDay.balance===null;
+  const [openingDate]=openingEntry()??[];
+  const coveredByOpening=Boolean(openingDate&&date&&date<=openingDate);
+  const isHistory=posted?.kind==="history";
+  note.hidden=!coveredByOpening&&!isHistory&&(!posted||currentDay.cost===posted.cost&&currentDay.prize===posted.prize);
+  if (coveredByOpening) note.textContent="這一天已涵蓋在截至 "+openingDate+" 的前期結餘內，請選擇之後的日期入帳。";
+  else if (isHistory) note.textContent="這一天是舊帳補登，原始金額可在流水帳查看。";
+  else if (posted) note.textContent="流水帳已存成本 "+fmt(posted.cost)+" 元、中獎 "+fmt(posted.prize)+" 元。上方試算有變動時，按「更新本日結算」才會改帳。";
+  $("postDay").textContent=posted?.kind==="daily"?"更新本日結算":"儲存本日結算";
+  $("postDay").disabled=!date||currentDay.balance===null||coveredByOpening||isHistory;
 }
 function renderLedger() {
   const out=$("ledger"); out.replaceChildren();
+  const [openingDate,opening]=openingEntry()??[];
+  const editButton=$("editOpening");
+  editButton.hidden=!activeIsManager();
+  editButton.textContent=opening?"編輯前期結餘":"設定前期結餘";
+  $("openingSummary").textContent=opening
+    ?"截至 "+openingDate+"，前期結餘 "+fmt(opening.cost-opening.prize)+" 元"+(opening.note?" · "+opening.note:"")
+    :"可將舊帳截止日剩餘的總額一次帶入。";
   const rows=ledgerRows();
   const selected=rows.find(row=>row.date===$("day").value);
   $("writeOff").disabled=!selected||selected.after<threshold;
   if (!rows.length) { out.append(node("p","儲存第一筆日結後，流水帳會從該日開始累計。","hint")); return; }
   if (selected) out.append(node("p",selected.after>=threshold?"選定日期可銷帳，結餘 "+fmtTotal(selected.after)+" 元。":"選定日期距銷帳門檻還差 "+fmtTotal(threshold-selected.after)+" 元。","note"));
   const formatted=rows.map(row=>{
+    const opening=row.entry.kind==="opening";
     const pick=node("button",row.date,"secondary");
-    pick.addEventListener("click",()=>{ $("day").value=row.date; $("day").dispatchEvent(new Event("change")); openView("today"); });
+    pick.addEventListener("click",()=>{
+      $("day").value=row.date;
+      $("day").dispatchEvent(new Event("change"));
+      if (!opening) openView("today");
+    });
     const notes=(row.entry.writeoffs||[]).map(event=>event.note).filter(Boolean).join("／");
     const dateCell=node("div");
     const exact=node("details");
     exact.append(node("summary","查看原始金額"));
-    const values=[
-      ["前期結餘",row.before],["成本",row.entry.cost],["中獎",row.entry.prize],
-      ["本日盈虧",row.net],["銷帳",row.off],["期末結餘",row.after]
-    ];
+    const values=opening
+      ?[["前期結餘",row.net],["銷帳",row.off],["期末結餘",row.after]]
+      :[["前期結餘",row.before],["成本",row.entry.cost],["中獎",row.entry.prize],
+        ["本日盈虧",row.net],["銷帳",row.off],["期末結餘",row.after]];
     for (const [label,value] of values) exact.append(node("div",label+" "+fmt(value)+" 元"));
-    dateCell.append(pick,exact);
-    return [dateCell,fmtTotal(row.before),fmtTotal(row.entry.cost),fmtTotal(row.entry.prize),fmtTotal(row.net),fmt(row.off)+(notes?" · "+notes:""),fmtTotal(row.after),row.after>=threshold?"可銷帳":"累計中"];
+    dateCell.append(pick);
+    if (opening || row.entry.kind==="history") {
+      dateCell.append(node("div",opening?"前期結餘":"舊帳補登","hint"));
+      if (row.entry.note) dateCell.append(node("div",row.entry.note,"hint"));
+    }
+    dateCell.append(exact);
+    return [dateCell,opening?fmt(row.net):fmtTotal(row.before),opening?"—":fmtTotal(row.entry.cost),
+      opening?"—":fmtTotal(row.entry.prize),opening?"—":fmtTotal(row.net),
+      fmt(row.off)+(notes?" · "+notes:""),opening?fmt(row.after):fmtTotal(row.after),row.after>=threshold?"可銷帳":"累計中"];
   });
-  const drafts=[...new Set(state.entries.filter(entry=>!entry.cancelled&&!state.ledger[entry.date]).map(entry=>entry.date))].sort();
+  const drafts=[...new Set(state.entries.filter(entry=>!entry.cancelled&&(!openingDate||entry.date>openingDate)&&!state.ledger[entry.date]).map(entry=>entry.date))].sort();
   if (drafts.length) out.append(node("p","尚未儲存日結："+drafts.join("、"),"hint"));
   out.append(summaryTable(["日期","前期結餘","成本","中獎","本日盈虧","銷帳","累計結餘","狀態"],formatted));
 }
@@ -1707,7 +1805,8 @@ function bookState(settings,rates,draws,orders,inputs,settlements,writeoffs,game
   next.entries=orders.map(row=>({id:row.id,date:row.business_date,customer:row.customer_name,defaultGame:row.default_game,
     raw:row.raw_text,paperNotation:row.paper_notation,cancelled:row.cancelled,revision:row.revision}));
   for (const row of settlements) next.ledger[row.business_date]={
-    cost:Number(row.cost),prize:Number(row.prize),two:row.two_star_units,three:row.three_star_units,postedAt:row.posted_at,writeoffs:[]
+    cost:Number(row.cost),prize:Number(row.prize),two:row.two_star_units,three:row.three_star_units,
+    postedAt:row.posted_at,kind:row.entry_kind??"daily",note:row.history_note??"",writeoffs:[]
   };
   for (const row of writeoffs) next.ledger[row.business_date]?.writeoffs.push({amount:Number(row.amount),note:row.note});
   return next;
@@ -1782,6 +1881,8 @@ function clearBookDrafts() {
   for (const id of ["orders","customer","quickNumbers","quickStar2","quickStar3","quickStar4","quickCar","writeNote"]) $(id).value="";
   for (const field of $("orderColumns").querySelectorAll("input")) field.value="";
   $("gameDialog").close();
+  $("openingDialog").close();
+  $("openingStatus").textContent="";
   syncCatalog(true);
   for (const id of ["message","accountMessage","ledgerMessage","settingsMessage","dayInputsMessage","permissionMessage","backupStatus"]) $(id).textContent="";
 }
